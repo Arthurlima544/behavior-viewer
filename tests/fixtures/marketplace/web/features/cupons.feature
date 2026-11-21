@@ -7,6 +7,7 @@ Funcionalidade: Cupons de desconto
 
     Cenário: Cupom expirado
       Dado que o cupom NATAL15 venceu ontem
+      E o cliente abre "/carrinho/cupom"
       Quando o cliente aplicar o cupom "NATAL15"
       Então o cupom deve ser recusado
 

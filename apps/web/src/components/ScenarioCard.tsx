@@ -1,6 +1,7 @@
 import type { Cenario } from '../api/types';
 import { ehPalavraChave, RESULT_LABEL, TIPO_LABEL } from '../lib/format';
 import { StatusDot } from './StatusDot';
+import { CapturaGaleria } from './CapturaGaleria';
 import styles from './ScenarioCard.module.css';
 
 interface Props {
@@ -54,6 +55,7 @@ export function ScenarioCard({ cenario, modo }: Props) {
           </div>
         ) : null}
       </div>
+      <CapturaGaleria capturas={cenario.capturas} />
     </article>
   );
 }

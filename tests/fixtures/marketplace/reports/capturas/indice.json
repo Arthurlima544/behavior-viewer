@@ -1,0 +1,19 @@
+{
+  "versao": 1,
+  "capturas": [
+    {
+      "funcionalidade": "Checkout",
+      "cenario": "Finalizar sem endereço válido",
+      "passo": "Dado que o carrinho contém um produto",
+      "arquivo": "reports/capturas/checkout/finalizar-sem-endereco-valido/01-dado.png",
+      "tela": "CheckoutPage"
+    },
+    {
+      "funcionalidade": "Checkout",
+      "cenario": "Finalizar sem endereço válido",
+      "passo": "Quando o cliente finalizar sem endereço de entrega",
+      "arquivo": "reports/capturas/checkout/finalizar-sem-endereco-valido/02-quando.png",
+      "tela": "CheckoutPage"
+    }
+  ]
+}

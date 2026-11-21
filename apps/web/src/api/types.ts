@@ -48,6 +48,36 @@ export interface RuleSummary {
   presenca: PresencaStack[];
 }
 
+export interface Captura {
+  passo: string;
+  arquivo: string;
+  tela: string | null;
+  /** URL da imagem na API (nunca o caminho do disco). */
+  url: string;
+}
+
+export interface ComponenteRef {
+  nome: string;
+  arquivo: string | null;
+}
+
+export interface TelaRef {
+  nome: string;
+  rota: string | null;
+  arquivo: string | null;
+  origem: 'tag' | 'rota';
+  declarada: boolean;
+  componentes: ComponenteRef[];
+}
+
+export interface TelaDeclarada {
+  nome: string;
+  rota: string | null;
+  arquivo: string | null;
+  componentes: ComponenteRef[];
+  regras: number;
+}
+
 export interface Cenario {
   nome: string;
   linha: number;
@@ -55,6 +85,9 @@ export interface Cenario {
   passos: { palavra: string; texto: string }[];
   exemplos: string[][];
   resultado: ScenarioResult;
+  telas: string[];
+  componentes: string[];
+  capturas: Captura[];
 }
 
 export interface Execucao {
@@ -91,6 +124,8 @@ export interface RuleDetail {
     ultimaExecucao: string | null;
     ultimaAlteracao: { commit: string; data: string } | null;
   }[];
+  telas: TelaRef[];
+  componentes: ComponenteRef[];
   ausentes: { stack: Stack; rotulo: string }[];
   historico: { stack: Stack; rotulo: string; execucoes: Execucao[] }[];
 }
@@ -190,6 +225,7 @@ export interface Descoberta {
 export interface ProjetoEstrutura {
   projeto: { id: string; nome: string; caminho: string; origem: 'auto' | 'config'; descricao: string };
   stacks: { id: Stack; rotulo: string; caminho: string; arquivos: number; relatorios: string[]; runner: string }[];
+  telas: TelaDeclarada[];
   testes: { arquivosFeature: number; funcionalidades: number; regras: number; cenarios: number };
   funcionalidades: {
     funcionalidade: string;

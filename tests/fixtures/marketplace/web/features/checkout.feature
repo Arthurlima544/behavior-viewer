@@ -1,12 +1,14 @@
 # language: pt
+@tela:CheckoutPage
 Funcionalidade: Checkout
   Finalização do pedido com regras de entrega, frete e estoque.
 
-  @RN-CHK-001 @critico @endereco
+  @RN-CHK-001 @critico @endereco @componente:FormularioEndereco
   Regra: Pedido só pode ser finalizado com endereço de entrega válido
 
     Cenário: Finalizar sem endereço válido
       Dado que o carrinho contém um produto
+      E o cliente abre "/checkout"
       Quando o cliente finalizar sem endereço de entrega
       Então o pedido não deve ser criado
 

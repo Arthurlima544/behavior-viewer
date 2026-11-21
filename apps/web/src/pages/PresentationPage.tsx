@@ -142,6 +142,7 @@ export function PresentationPage() {
 
 function Slide({ regra, numero, porqueFallback }: { regra: RuleDetail; numero: string; porqueFallback: string }) {
   const camadas = camadasDe(regra);
+  const captura = regra.implementacoes.flatMap((i) => i.cenarios.flatMap((c) => c.capturas))[0];
   const porque = regra.descricao || porqueFallback;
   return (
     <section className={styles.slide} aria-label={`Regra ${numero}`}>
@@ -149,6 +150,11 @@ function Slide({ regra, numero, porqueFallback }: { regra: RuleDetail; numero: s
         <span className={`mono ${styles.label}`}>
           REGRA {numero} · {regra.id}
         </span>
+        {regra.telas.length > 0 ? (
+          <span className={styles.tela}>
+            Tela: {regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ')}
+          </span>
+        ) : null}
         <h1 className={styles.title}>{regra.titulo}</h1>
         {porque ? <p className={styles.why}>{porque}</p> : null}
       </div>
@@ -168,6 +174,13 @@ function Slide({ regra, numero, porqueFallback }: { regra: RuleDetail; numero: s
             </div>
           ) : null}
         </div>
+      ) : null}
+
+      {captura ? (
+        <figure className={styles.figure}>
+          <img src={captura.url} alt={`Tela durante o passo: ${captura.passo}`} className={styles.figImg} />
+          <figcaption className={styles.figCaption}>{captura.passo}</figcaption>
+        </figure>
       ) : null}
 
       <div className={styles.garantia}>

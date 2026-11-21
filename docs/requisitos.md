@@ -183,3 +183,11 @@ Problema que resolve: as regras de negócio ficam espalhadas em arquivos Gherkin
 - Os projetos já são executados localmente pelo time. O Behavior Viewer não precisa das ferramentas de build de cada stack.
 - Os relatórios de execução são gerados pelo próprio projeto ou pelo CI e ficam acessíveis no workspace.
 - Os arquivos `.feature` estão em UTF-8.
+
+## 6. Telas, componentes e capturas (ADR-0014)
+
+| ID | Requisito | Prio | Critérios de aceite |
+|---|---|---|---|
+| RF-55 | Ler as tags `@tela:<Nome>` e `@componente:<Nome>` de funcionalidades, regras e cenários. A declaração mais específica vence (cenário, regra, funcionalidade), separadamente para telas e componentes. | M | Um cenário sem tag herda a tela da regra e da funcionalidade. Um cenário com `@componente:X` mostra X mesmo que a regra não tenha. |
+| RF-56 | Ler a seção `telas` do `.behavior.yml` (nome, rota, arquivo e componentes) e ligar cada regra às telas: por tag, ou por rota declarada citada entre aspas em um passo. | M | Um passo `"/checkout"` com a tela `/checkout` declarada liga a regra à tela com origem "pela rota no passo". Tag de tela não declarada aparece como "não declarada". |
+| RF-57 | Ler `reports/capturas/indice.json` e exibir cada captura no cenário correspondente (funcionalidade + cenário). As imagens são servidas pela API só se estiverem dentro da pasta do projeto, com extensão de imagem e tamanho até 15 MB. | M | Caminho absoluto, com `..` ou fora da pasta do projeto é recusado (400 ou 403). Entrada inválida no índice vira aviso e não derruba as demais. |

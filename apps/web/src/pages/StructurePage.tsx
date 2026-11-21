@@ -85,6 +85,40 @@ export function StructurePage() {
         )}
       </section>
 
+      {e.telas.length > 0 ? (
+        <section className={styles.section} aria-labelledby="telas-decl-titulo">
+          <h2 id="telas-decl-titulo" className={styles.title}>
+            Telas declaradas
+          </h2>
+          <div className={styles.tableWrap}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th scope="col">Tela</th>
+                  <th scope="col">Rota</th>
+                  <th scope="col">Arquivo</th>
+                  <th scope="col">Componentes</th>
+                  <th scope="col" className={styles.num}>
+                    Regras
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {e.telas.map((t) => (
+                  <tr key={t.nome}>
+                    <td>{t.nome}</td>
+                    <td className={`mono ${styles.muted}`}>{t.rota ?? '—'}</td>
+                    <td className={`mono ${styles.muted}`}>{t.arquivo ?? '—'}</td>
+                    <td className={styles.muted}>{t.componentes.map((c) => c.nome).join(', ') || '—'}</td>
+                    <td className={`mono ${styles.num}`}>{t.regras}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+
       <section className={styles.section} aria-labelledby="funcs-titulo">
         <h2 id="funcs-titulo" className={styles.title}>
           Funcionalidades e testes BDD

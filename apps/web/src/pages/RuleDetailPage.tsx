@@ -11,6 +11,7 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { StatusChip } from '../components/StatusChip';
 import { Tag } from '../components/Tag';
 import { ImplementationCard } from '../components/ImplementationCard';
+import { TelasPanel } from '../components/TelasPanel';
 import { RunHistoryStrip } from '../components/RunHistoryStrip';
 import { ScenarioCard } from '../components/ScenarioCard';
 import { rotuloStatus, STACK_LABEL, tempoRelativo } from '../lib/format';
@@ -33,7 +34,9 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
   const [modo, setModo] = useState<Modo>('gherkin');
   const [visiveis, setVisiveis] = useState(PAGE);
   const [copiado, setCopiado] = useState<string | null>(null);
-  const principal = regra.implementacoes[0];
+  // Cenários exibidos: a primeira stack que tem capturas (se houver), senão a primeira stack.
+  const principal =
+    regra.implementacoes.find((i) => i.cenarios.some((c) => c.capturas.length > 0)) ?? regra.implementacoes[0];
   const cenarios = principal?.cenarios ?? [];
   const falhando = regra.implementacoes.find((i) => i.status === 'falhando');
   const ultimaAlteracao = regra.implementacoes.find((i) => i.ultimaAlteracao)?.ultimaAlteracao ?? null;
@@ -147,6 +150,7 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
         </div>
 
         <aside className={styles.side} aria-label="Onde a regra está">
+          <TelasPanel telas={regra.telas} componentes={regra.componentes} />
           <section className={styles.sideSection}>
             <h2 className={styles.sectionTitle}>Onde a regra está</h2>
             {regra.implementacoes.map((i) => (

@@ -1,3 +1,4 @@
+@tela:CheckoutPage
 Feature: Checkout
   Finalizacao do pedido com regras de entrega, frete e estoque.
 
@@ -10,7 +11,7 @@ Feature: Checkout
       When the customer finishes without a delivery address
       Then the order must not be created
 
-  @RN-CHK-004 @frete @promo
+  @RN-CHK-004 @frete @promo @componente:ResumoCarrinho
   Rule: Orders above R$ 299 get free shipping
 
     Scenario: Order above the limit

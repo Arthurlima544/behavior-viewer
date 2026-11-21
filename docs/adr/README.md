@@ -26,6 +26,7 @@ Cada decisão importante fica registrada aqui, com contexto, escolha e consequê
 | [0011](#adr-0011-primitivas-de-acessibilidade) | Primitivas de acessibilidade | Proposta |
 | [0012](#adr-0012-licença-mit) | Licença MIT | Aceita |
 | [0013](#adr-0013-idioma-da-documentação) | Idioma da documentação | Proposta |
+| [0014](#adr-0014-convenção-de-telas-componentes-e-capturas-de-tela) | Convenção de telas, componentes e capturas de tela | Aceita |
 
 ---
 
@@ -201,3 +202,23 @@ Cada decisão importante fica registrada aqui, com contexto, escolha e consequê
 **Contexto.** A interface e o design são em pt-BR. O projeto é open source e pode receber contribuições de outros países.
 
 **Proposta.** Documentação e interface em pt-BR no MVP (RNF-10). Mensagens isoladas em arquivos de tradução para permitir inglês depois. README em inglês como segunda versão (`README.en.md`) quando houver contribuidores de fora.
+
+---
+
+## ADR-0014: Convenção de telas, componentes e capturas de tela
+
+**Status:** Aceita
+
+**Contexto.** Em projetos de frontend e mobile, o usuário tem dificuldade para saber em qual tela e componente uma regra se aplica. Duas fontes de informação resolvem isso sem depender de análise de código: metadados explícitos e capturas feitas pelos próprios testes.
+
+**Decisão.** O projeto declara a convenção em três partes, descritas em [docs/prompts](prompts/README.md):
+
+1. Tags `@tela:<Nome>` e `@componente:<Nome>` nos arquivos `.feature`, com herança funcionalidade → regra → cenário (RF-55).
+2. Seção `telas` no `.behavior.yml`, com nome, rota, arquivo e componentes. A regra também se liga a uma tela quando um passo cita a rota entre aspas (RF-56).
+3. Capturas em `reports/capturas/`, com `indice.json` na raiz do projeto. O índice associa cada captura a uma funcionalidade, um cenário e um passo (RF-57).
+
+**Consequências.**
+- O índice de capturas não diz a qual stack pertence cada imagem. Por isso uma captura de um cenário aparece em todas as implementações que têm um cenário com o mesmo nome. Se as stacks tiverem nomes diferentes, a captura só aparece na stack que tem o nome igual.
+- A herança é por substituição: uma declaração mais específica não soma com a mais geral, ela a substitui, para cada tipo (tela ou componente).
+- A tela inferida por rota depende de a rota aparecer exatamente entre aspas no passo. Helpers que montam a rota em tempo de execução não são reconhecidos.
+- A API não expõe caminhos do disco: as imagens têm URL própria e são validadas a cada requisição.

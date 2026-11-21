@@ -1,0 +1,42 @@
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.link {
+  display: block;
+  border: 1px solid var(--border-button);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--surface-0);
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.caption {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted-2);
+}
+
+.tela {
+  font-size: 11px;
+  color: var(--text-3);
+}

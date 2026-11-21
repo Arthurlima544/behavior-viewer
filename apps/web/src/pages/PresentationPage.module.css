@@ -326,3 +326,29 @@
     padding: 16px 20px;
   }
 }
+
+.tela {
+  font-size: 14px;
+  color: var(--text-muted-2);
+}
+
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 560px;
+}
+
+.figImg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border-button);
+  border-radius: var(--radius-xl);
+}
+
+.figCaption {
+  font-size: 13px;
+  color: var(--text-muted-2);
+}

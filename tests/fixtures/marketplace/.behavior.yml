@@ -14,5 +14,18 @@ stacks:
     caminho: api
     relatorios:
       - target/cucumber.json
+# Mapa de telas (docs/prompts, seção 2): liga as tags @tela: e as rotas citadas nos passos.
+telas:
+  - nome: CheckoutPage
+    rota: /checkout
+    arquivo: web/src/pages/CheckoutPage.tsx
+    componentes:
+      - nome: FormularioEndereco
+        arquivo: web/src/components/FormularioEndereco.tsx
+      - nome: ResumoCarrinho
+        arquivo: web/src/components/ResumoCarrinho.tsx
+  - nome: CupomPage
+    rota: /carrinho/cupom
+    arquivo: web/src/pages/CupomPage.tsx
 ignorar:
   - "**/rascunhos/**"
