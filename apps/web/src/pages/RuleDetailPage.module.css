@@ -100,12 +100,18 @@
   color: var(--text);
 }
 
-/* Dois cenários lado a lado quando a área de conteúdo é larga; um por linha quando é estreita. */
+/* Um cenário por linha em telas estreitas; dois lado a lado a partir de 1200px de largura. */
 .grade {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 500px), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+}
+
+@media (min-width: 1200px) {
+  .grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .grade > .more {
