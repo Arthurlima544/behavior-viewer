@@ -143,3 +143,21 @@ test.describe('botão de apresentar no catálogo', () => {
     await expect(page).toHaveURL(/\/apresentar\/cupons-de-desconto/);
   });
 });
+
+test.describe('menu lateral recolhível', () => {
+  test('recolhe e expande, e lembra a escolha ao recarregar', async ({ page }) => {
+    await page.goto('/');
+    const menu = page.getByRole('complementary', { name: 'Navegação lateral' });
+    await expect(menu).toHaveAttribute('data-recolhido', 'false');
+    await page.getByRole('button', { name: 'Recolher menu' }).click();
+    await expect(menu).toHaveAttribute('data-recolhido', 'true');
+    // A largura anima em 180ms: espera o valor final.
+    await expect.poll(() => menu.evaluate((el) => el.getBoundingClientRect().width)).toBeLessThan(100);
+    // Os links continuam acessíveis mesmo sem o rótulo visível.
+    await expect(page.getByRole('link', { name: 'Catálogo de regras' })).toBeVisible();
+    await page.reload();
+    await expect(page.getByRole('complementary', { name: 'Navegação lateral' })).toHaveAttribute('data-recolhido', 'true');
+    await page.getByRole('button', { name: 'Expandir menu' }).click();
+    await expect(page.getByRole('complementary', { name: 'Navegação lateral' })).toHaveAttribute('data-recolhido', 'false');
+  });
+});

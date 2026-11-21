@@ -4,9 +4,26 @@ import { Sidebar } from '../components/Sidebar';
 import { SearchDialog } from '../components/SearchDialog';
 import styles from './AppLayout.module.css';
 
-/** Shell com sidebar fixa e área principal. Atalho global ⌘K / Ctrl+K abre a busca (RF-47). */
+const CHAVE_RECOLHIDO = 'bv.sidebar.recolhida';
+
+/** Shell com sidebar (recolhível) e área principal. Atalho global ⌘K / Ctrl+K abre a busca (RF-47). */
 export function AppLayout() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [recolhido, setRecolhido] = useState<boolean>(() => {
+    try {
+      return window.localStorage.getItem(CHAVE_RECOLHIDO) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(CHAVE_RECOLHIDO, recolhido ? '1' : '0');
+    } catch {
+      // armazenamento indisponível: a preferência vale só nesta sessão
+    }
+  }, [recolhido]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -21,7 +38,7 @@ export function AppLayout() {
 
   return (
     <div className={styles.shell}>
-      <Sidebar />
+      <Sidebar recolhido={recolhido} onToggle={() => setRecolhido((v) => !v)} />
       <main className={styles.main} id="conteudo">
         <Outlet context={{ abrirBusca: () => setSearchOpen(true) }} />
       </main>
