@@ -1,0 +1,93 @@
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+
+.name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.result {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted-2);
+}
+
+.body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  background: var(--surface-0);
+}
+
+.step {
+  display: flex;
+  gap: 12px;
+}
+
+.kw {
+  color: var(--text);
+  font-weight: 600;
+  flex: none;
+  width: 72px;
+}
+
+.kwMuted {
+  color: var(--text-muted);
+  font-weight: 500;
+  flex: none;
+  width: 72px;
+}
+
+.text {
+  color: var(--text-3);
+  font-family: var(--font-ui);
+}
+
+.examples {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.exTitle {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.examples table {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.examples th,
+.examples td {
+  padding: 4px 12px;
+  border: 1px solid var(--border-strong);
+  text-align: left;
+}
+
+.examples th {
+  color: var(--text-2);
+  font-weight: 600;
+}

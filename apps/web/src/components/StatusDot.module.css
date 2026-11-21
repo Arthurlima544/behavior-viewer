@@ -1,0 +1,25 @@
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.pass {
+  background: var(--status-pass);
+}
+
+.fail {
+  background: var(--status-fail);
+}
+
+.pending {
+  border: 1.5px solid var(--status-pending);
+  box-sizing: border-box;
+}
+
+.none {
+  border: 1.5px dashed var(--text-icon-muted);
+  box-sizing: border-box;
+}

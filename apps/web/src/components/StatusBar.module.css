@@ -1,0 +1,48 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.bar {
+  display: flex;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--border-strong);
+  gap: 2px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-muted-2);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dotPass,
+.dotPending,
+.dotFail {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotPass {
+  background: var(--status-pass);
+}
+
+.dotPending {
+  background: var(--status-pending);
+}
+
+.dotFail {
+  background: var(--status-fail);
+}

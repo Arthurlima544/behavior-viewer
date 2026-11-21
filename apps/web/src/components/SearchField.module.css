@@ -1,0 +1,35 @@
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-muted-2);
+  font-size: 14px;
+  min-width: 260px;
+  box-sizing: border-box;
+  cursor: text;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--text);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.kbd {
+  font-size: 11px;
+  color: var(--text-muted);
+  border: 1px solid var(--border-button);
+  border-radius: var(--radius-xs);
+  padding: 2px 5px;
+}

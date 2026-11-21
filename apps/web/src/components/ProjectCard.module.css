@@ -1,0 +1,91 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+  color: var(--text);
+  text-decoration: none;
+  transition: border-color var(--transition-color);
+}
+
+.card:hover {
+  color: var(--text);
+  border-color: var(--border-button);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.titleBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.desc {
+  font-size: 13px;
+  color: var(--text-muted-2);
+  line-height: 1.45;
+}
+
+.stacks {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.stackBox {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-icon);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.counter {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.counterValue {
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.counterLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}

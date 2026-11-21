@@ -1,0 +1,71 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+}
+
+.failing {
+  border-color: var(--status-fail-border);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.icon {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-icon);
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-2);
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.layer {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.path {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3);
+  word-break: break-all;
+}
+
+.stepsLine {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted-2);
+}
+
+.note {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-muted-2);
+}

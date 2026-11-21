@@ -1,0 +1,48 @@
+.panel {
+  flex: 1 1 260px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted-2);
+}
+
+.text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.text strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.link {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border: 1px solid var(--border-button);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
