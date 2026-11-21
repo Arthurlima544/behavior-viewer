@@ -44,7 +44,7 @@ Problema que resolve: as regras de negócio ficam espalhadas em arquivos Gherkin
 
 | ID | Requisito | Prio | Critérios de aceite |
 |---|---|---|---|
-| RF-01 | Descobrir projetos automaticamente varrendo as pastas raiz configuradas e identificando diretórios que contêm arquivos `.feature`. | M | Dado um workspace com 3 projetos com `.feature`, o scan lista os 3. Pastas sem `.feature` não aparecem. Pastas ignoradas por padrão (`node_modules`, `build`, `target`, `.git`, `.dart_tool`) são puladas. |
+| RF-01 | Identificar projetos a partir de uma pasta escolhida pelo usuário (navegando ou digitando o caminho), identificando diretórios que contêm arquivos `.feature`. Nenhum projeto é pré-cadastrado. | M | Dado um workspace com 3 projetos com `.feature`, o scan lista os 3. Pastas sem `.feature` não aparecem. Pastas ignoradas por padrão (`node_modules`, `build`, `target`, `.git`, `.dart_tool`) são puladas. |
 | RF-02 | Permitir selecionar manualmente quais projetos entram ou saem da visualização, pela UI e pelo arquivo de configuração. | M | Desmarcar um projeto na UI o remove da visão geral sem apagar dados. A seleção persiste entre reinícios. |
 | RF-03 | Agrupar as stacks dentro de um projeto. Um projeto pode ter 1, 2, 3 ou mais stacks. | M | Um projeto com `app/` (Flutter), `web/` (TypeScript) e `api/` (Java) aparece como um único projeto com 3 stacks. |
 | RF-04 | Identificar a stack pelos manifestos: `pubspec.yaml` (Flutter/Dart), `package.json` com Cucumber ou Playwright (TypeScript/JavaScript), `pom.xml` ou `build.gradle(.kts)` com Cucumber (Java). Stack não reconhecida vira "Gherkin genérico". | M | Cada fixture de exemplo em `fixtures/` é classificada na stack correta. |
@@ -140,7 +140,7 @@ Problema que resolve: as regras de negócio ficam espalhadas em arquivos Gherkin
 |---|---|---|---|
 | RF-50 | Permitir reexecutar a varredura sob demanda ("Sincronizar") e periodicamente (intervalo configurável, padrão 60 s). | M | Após criar um `.feature`, o novo cenário aparece sem reiniciar o container. |
 | RF-51 | Configuração global por variáveis de ambiente e arquivo: caminhos raiz do workspace, porta, intervalo de varredura e caminhos de relatórios. | M | Todas as opções têm valor padrão e estão documentadas em `docs/` e no `docker-compose.yml`. |
-| RF-52 | Estado vazio: sem projetos, sem regras ou sem resultados têm mensagens claras com o próximo passo ("Configure BEHAVIOR_WORKSPACE..."). | M | Nenhuma tela fica em branco sem explicação. |
+| RF-52 | Estado vazio: sem projetos, sem regras ou sem resultados têm mensagens claras com o próximo passo ("Adicionar projeto"). | M | Nenhuma tela fica em branco sem explicação. |
 | RF-53 | Exportar as regras de um projeto em JSON. | C | Fora do MVP. |
 
 ---

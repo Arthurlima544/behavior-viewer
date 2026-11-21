@@ -295,7 +295,7 @@ services:
     ports:
       - "127.0.0.1:8787:8787"          # RNF-05: somente localhost
     environment:
-      BEHAVIOR_WORKSPACE: /workspace     # raízes separadas por vírgula
+      BEHAVIOR_BROWSE_ROOTS: /host       # pastas navegáveis (a pasta pessoal, montada somente leitura)
       BEHAVIOR_SCAN_INTERVAL: 60         # segundos (RF-50)
       BEHAVIOR_PORT: 8787
     volumes:

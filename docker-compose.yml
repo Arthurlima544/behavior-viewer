@@ -1,21 +1,32 @@
 # Execução local (RNF-02). Uso:
-#   BEHAVIOR_HOST_WORKSPACE=~/code docker compose up --build
-# Várias pastas: monte cada uma em /workspace/<nome> e liste em BEHAVIOR_WORKSPACE, separadas por vírgula.
+#   docker compose up --build        (pasta pessoal, somente leitura)
+#   HOST_HOME=~/code docker compose up --build   (só uma pasta, mais restrito)
+# No Windows (PowerShell): $env:HOST_HOME="C:\Users\seu-usuario\code"
+#
+# Linux: a pasta pessoal costuma ser legível só pelo seu usuário. O contêiner roda com o seu uid/gid
+# (sem privilégios de root) para conseguir ler a pasta. Use:
+#   HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build
+#
+# A pasta HOST_HOME é montada em /host, somente leitura, e aparece na interface como "~".
+# O Behavior Viewer nunca escreve nela. Os projetos são registrados pela própria interface.
 services:
   behavior-viewer:
     build:
       context: .
       dockerfile: docker/Dockerfile
     image: behavior-viewer:local
+    # Mesmo uid/gid do usuário da máquina: a pasta montada é legível só por ele (Linux).
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     ports:
       # RNF-05: a porta só é publicada no localhost da máquina.
       - "127.0.0.1:8787:8787"
     environment:
-      BEHAVIOR_WORKSPACE: /workspace
+      BEHAVIOR_BROWSE_ROOTS: /host
+      BEHAVIOR_BROWSE_LABEL: "~"
       BEHAVIOR_SCAN_INTERVAL: "60"
     volumes:
-      # RNF-03: o workspace é montado somente leitura.
-      - ${BEHAVIOR_HOST_WORKSPACE:-./fixtures}:/workspace:ro
+      # RNF-03: a pasta do usuário é montada somente leitura.
+      - ${HOST_HOME:-${HOME}}:/host:ro
       - behavior-data:/data
     restart: unless-stopped
 

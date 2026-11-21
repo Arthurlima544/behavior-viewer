@@ -35,15 +35,26 @@ Design de referência (canvas): [visão geral, catálogo, detalhe e modo apresen
 Pré-requisitos: Docker Desktop (macOS e Windows) ou Docker Engine com o plugin Compose (Linux).
 
 ```bash
-# Aponte para a pasta onde estão seus projetos (somente leitura)
-BEHAVIOR_HOST_WORKSPACE=~/code docker compose up --build
+HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build   # Linux
+docker compose up --build                                       # macOS e Windows
 ```
 
-Abra **http://localhost:8787**. Sem a variável, o compose usa a pasta `fixtures/` do repositório como exemplo.
+Abra **http://localhost:8787** e clique em **Adicionar projeto**:
 
-Para várias pastas, monte cada uma em `/workspace/<nome>` no `docker-compose.yml` e liste todas em `BEHAVIOR_WORKSPACE`, separadas por vírgula.
+1. Navegue pelas pastas ou digite o caminho (por exemplo `~/code`).
+2. O Behavior Viewer identifica os projetos da pasta, com stacks, funcionalidades e cenários.
+3. Marque os que quiser e clique em **Registrar**.
 
-**Windows:** mantenha os projetos dentro do WSL2 ou em um drive compartilhado no Docker Desktop. Ver as [notas por sistema operacional](docs/arquitetura.md#83-notas-por-sistema-operacional).
+Nada é pré-cadastrado. A pasta pessoal aparece como `~` e é montada **somente leitura**. Para limitar o acesso a uma pasta só, defina `HOST_HOME`:
+
+```bash
+HOST_HOME=~/code docker compose up --build
+# Windows (PowerShell): $env:HOST_HOME="C:\Users\seu-usuario\code"
+```
+
+Trocar `HOST_HOME` muda o caminho interno dos projetos: registre-os de novo nesse caso.
+
+**Windows:** mantenha os projetos em um drive compartilhado no Docker Desktop ou dentro do WSL2. Ver as [notas por sistema operacional](docs/arquitetura.md#83-notas-por-sistema-operacional).
 
 ### Desenvolvimento
 
@@ -53,7 +64,7 @@ Pré-requisitos: Node.js 22 LTS e npm 10 ou superior.
 npm ci
 npm run dev          # API em :8787 e interface em :5173 (recarga automática)
 npm test             # testes unitários e de API
-npm run test:e2e     # navegador real (Playwright), sobre as fixtures
+npm run test:e2e     # navegador real (Playwright), com projetos de teste em tests/fixtures
 npm run lint && npm run typecheck
 ```
 
@@ -61,7 +72,8 @@ npm run lint && npm run typecheck
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `BEHAVIOR_WORKSPACE` | `/workspace` | Uma ou mais pastas raiz, separadas por vírgula. |
+| `BEHAVIOR_BROWSE_ROOTS` | pasta pessoal | Pastas que a interface pode navegar e registrar, separadas por vírgula. |
+| `BEHAVIOR_BROWSE_LABEL` | `~` | Como a raiz aparece nos caminhos da interface. |
 | `BEHAVIOR_PORT` | `8787` | Porta do servidor. |
 | `BEHAVIOR_HOST` | `127.0.0.1` | Endereço de escuta. No contêiner é `0.0.0.0`, e o compose publica só em `127.0.0.1`. |
 | `BEHAVIOR_SCAN_INTERVAL` | `60` | Intervalo da varredura automática em segundos. `0` desativa. |

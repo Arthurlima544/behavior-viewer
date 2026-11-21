@@ -56,7 +56,7 @@ jobs:
       - name: Teste de fumaça com a imagem amd64
         run: |
           docker build -f docker/Dockerfile -t behavior-viewer:ci .
-          docker run -d --name bv -p 127.0.0.1:8787:8787 -v "$PWD/fixtures:/workspace:ro" behavior-viewer:ci
+          docker run -d --name bv -p 127.0.0.1:8787:8787 -e BEHAVIOR_BROWSE_ROOTS=/host -v "$PWD:/host:ro" behavior-viewer:ci
           for i in $(seq 1 30); do
             if curl -fs http://127.0.0.1:8787/api/v1/health; then echo; exit 0; fi
             sleep 2

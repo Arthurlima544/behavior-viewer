@@ -25,15 +25,17 @@ FROM node:22-slim AS runtime
 ENV NODE_ENV=production \
     BEHAVIOR_HOST=0.0.0.0 \
     BEHAVIOR_PORT=8787 \
-    BEHAVIOR_WORKSPACE=/workspace \
+    BEHAVIOR_BROWSE_ROOTS=/host \
+    BEHAVIOR_BROWSE_LABEL=~ \
     BEHAVIOR_DATA_DIR=/data \
     BEHAVIOR_SCAN_INTERVAL=60 \
-    BEHAVIOR_LOG_LEVEL=info
+    BEHAVIOR_LOG_LEVEL=info \
+    HOME=/tmp
 WORKDIR /app
 RUN groupadd --system --gid 10001 behavior \
  && useradd --system --uid 10001 --gid behavior --no-create-home behavior \
- && mkdir -p /data /workspace \
- && chown behavior:behavior /data
+ && mkdir -p /data /host \
+ && chmod 1777 /data
 COPY --from=build --chown=root:root /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./
 COPY --from=build /app/packages/domain/package.json packages/domain/

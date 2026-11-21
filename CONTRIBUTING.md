@@ -43,9 +43,9 @@ Passos:
 git clone <url-do-repositorio>
 cd behavior-viewer
 npm ci
-npm run dev          # API em :8787 e interface em :5173, com recarga (usa as fixtures)
+npm run dev          # API em :8787 e interface em :5173, com recarga
 npm test             # testes unitários (domínio, servidor e interface)
-npm run test:e2e     # E2E no Chromium, com o servidor real sobre as fixtures
+npm run test:e2e     # E2E no Chromium, com o servidor real e os projetos de teste
 npm run lint         # ESLint
 npm run typecheck    # tsc --noEmit em todos os pacotes
 ```
@@ -58,18 +58,18 @@ docker compose up --build
 
 ### Projetos de exemplo
 
-As fixtures em `fixtures/` simulam projetos reais. Use-as para testar o scanner e o parser sem depender de código de terceiros. O modo `npm run dev` já aponta para elas por meio de `apps/server/.env.development`.
+As fixtures em `tests/fixtures/` simulam projetos reais e são usadas só pelos testes (o produto não traz projetos pré-cadastrados). Use-as para testar o scanner e o parser sem depender de código de terceiros. Em `npm run dev`, adicione `tests/fixtures/marketplace` pela interface para testar.
 
 Regressão visual contra os artboards do design ainda não está automatizada (ver [roadmap](docs/roadmap.md)). Ao mexer em tela, compare com o design à mão.
 
 | Fixture | Testa |
 |---|---|
-| `fixtures/flutter-app/` | Detecção Flutter, relatório JUnit |
-| `fixtures/ts-web/` | Detecção TypeScript, relatório Cucumber JSON |
-| `fixtures/java-api/` | Detecção Java, falhas e pendências |
-| `fixtures/pt-br/` | `# language: pt` |
-| `fixtures/erros/` | Erro de sintaxe isolado por arquivo |
-| `fixtures/sem-rule/` | Regras implícitas |
+| `tests/fixtures/marketplace/app` | Detecção Flutter, relatório JUnit |
+| `tests/fixtures/marketplace/web` | Detecção TypeScript, relatório Cucumber JSON |
+| `tests/fixtures/marketplace/api` | Detecção Java, falhas e pendências |
+| `tests/fixtures/marketplace/web/features` | `# language: pt` |
+| `tests/fixtures/projeto-sem-config/features/quebrado.feature` | Erro de sintaxe isolado por arquivo |
+| `tests/fixtures/projeto-sem-config` | Detecção automática (sem `.behavior.yml`) e regras implícitas |
 
 ---
 
@@ -142,7 +142,7 @@ Para mudanças visíveis ao usuário, adicione um arquivo Changeset (`npx change
 ### Testes
 
 - Parser, extrator, consolidador e cálculo de status: **teste unitário obrigatório**.
-- Mudança em scanner ou detecção de stack: **teste com fixture** em `fixtures/`.
+- Mudança em scanner ou detecção de stack: **teste com fixture** em `tests/fixtures/`.
 - Mudança visual: **atualizar a captura de regressão** e explicar a diferença no PR.
 - Cobertura mínima do domínio e do parser: 80%.
 
