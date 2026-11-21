@@ -12,14 +12,9 @@ import {
   type Stack,
 } from '@behavior-viewer/domain';
 import type { AppConfig } from './config.js';
-import {
-  discoverFeatures,
-  isIgnored,
-  resolveProjectRoot,
-  resolveStack,
-  type FeatureFileRef,
-} from './scanner/discover.js';
-import type { ProjectConfig } from './scanner/projectConfig.js';
+import { displayPath } from './paths.js';
+import { discoverFeatures, isIgnored, resolveStack, type FeatureFileRef } from './scanner/discover.js';
+import { readProjectConfig, type ProjectConfig } from './scanner/projectConfig.js';
 import { loadReports, type LoadedReports } from './scanner/reports.js';
 import {
   consolidationKey,
@@ -69,9 +64,19 @@ interface ImplDraft {
   ultimaExecucao: string | null;
 }
 
-/** Monta um snapshot completo do estado atual dos workspaces (RF-01 a RF-26). */
+/** Projeto registrado pelo usuário: a pasta é a raiz do projeto. */
+export interface ProjetoRegistrado {
+  /** Caminho real da pasta do projeto. */
+  root: string;
+}
+
+/**
+ * Monta o snapshot dos projetos registrados (RF-01 a RF-26). Cada projeto registrado é uma
+ * unidade: as stacks são detectadas dentro dele e as funcionalidades são os `.feature` encontrados.
+ */
 export async function buildSnapshot(
-  config: AppConfig
+  config: AppConfig,
+  registrados: ProjetoRegistrado[],
 ): Promise<Snapshot & { reportStamps: ReportStamp[]; raizes: Map<string, string> }> {
   const started = Date.now();
   const erros: ErroModel[] = [];
@@ -79,14 +84,15 @@ export async function buildSnapshot(
   const reportStamps: ReportStamp[] = [];
   const raizes = new Map<string, string>();
 
-  for (const workspace of config.workspaces) {
+  for (const { root } of registrados) {
+    const id = projectId(root);
     let discovery;
     try {
-      discovery = await discoverFeatures(workspace);
+      discovery = await discoverFeatures(root, { maxEntries: 500_000, deadlineMs: 60_000 });
     } catch (err) {
       erros.push({
-        projetoId: null,
-        arquivo: workspace,
+        projetoId: id,
+        arquivo: root,
         linha: null,
         tipo: 'feature',
         mensagem: `pasta não acessível: ${err instanceof Error ? err.message : String(err)}`,
@@ -94,9 +100,26 @@ export async function buildSnapshot(
       continue;
     }
 
-    const configCache = new Map<string, { config: ProjectConfig | null; error?: string }>();
+    const read = await readProjectConfig(root);
+    if (read.error) {
+      erros.push({ projetoId: id, arquivo: '.behavior.yml', linha: null, tipo: 'config', mensagem: read.error });
+    }
+    const config = read.config;
+    accs.set(root, { root, config, features: [] });
+
     for (const feature of discovery.features) {
-      await collectFeature(feature, workspace, discovery.markerDirs, configCache, accs, erros);
+      const fileRel = relative(root, feature.absPath).split(sep).join('/');
+      if (config && isIgnored(fileRel, config.ignorar)) continue;
+      await collectFeature(feature, root, fileRel, config, accs, erros);
+    }
+    if (discovery.parcial) {
+      erros.push({
+        projetoId: id,
+        arquivo: root,
+        linha: null,
+        tipo: 'feature',
+        mensagem: 'varredura interrompida por limite de tempo ou de entradas: a lista pode estar incompleta',
+      });
     }
   }
 
@@ -121,27 +144,13 @@ export async function buildSnapshot(
 
 async function collectFeature(
   feature: FeatureFileRef,
-  workspace: string,
-  markerDirs: Set<string>,
-  configCache: Map<string, { config: ProjectConfig | null; error?: string }>,
+  projectRoot: string,
+  fileRel: string,
+  config: ProjectConfig | null,
   accs: Map<string, ProjectAcc>,
-  erros: ErroModel[]
+  erros: ErroModel[],
 ): Promise<void> {
-  const resolution = await resolveProjectRoot(feature, workspace, markerDirs, configCache);
-  const { projectRoot, config } = resolution;
-  const fileRel = relative(projectRoot, feature.absPath).split(sep).join('/');
-
-  if (resolution.configError) {
-    erros.push({
-      projetoId: null,
-      arquivo: relative(workspace, join(projectRoot, '.behavior.yml')).split(sep).join('/'),
-      linha: null,
-      tipo: 'config',
-      mensagem: resolution.configError,
-    });
-  }
-  if (config && isIgnored(fileRel, config.ignorar)) return;
-
+  const id = projectId(projectRoot);
   const { stack, stackDirRel } = await resolveStack(feature.absPath, projectRoot, config);
 
   let source: string;
@@ -149,8 +158,8 @@ async function collectFeature(
     source = await fs.readFile(feature.absPath, 'utf8');
   } catch (err) {
     erros.push({
-      projetoId: projectId(projectRoot),
-      arquivo: feature.workspaceRelPath,
+      projetoId: id,
+      arquivo: fileRel,
       linha: null,
       tipo: 'feature',
       mensagem: `não foi possível ler o arquivo: ${err instanceof Error ? err.message : String(err)}`,
@@ -161,28 +170,18 @@ async function collectFeature(
   const outcome = parseFeatureSource(source, fileRel);
   if (!outcome.ok) {
     for (const e of outcome.erros) {
-      erros.push({
-        projetoId: projectId(projectRoot),
-        arquivo: feature.workspaceRelPath,
-        linha: e.linha,
-        tipo: 'feature',
-        mensagem: e.mensagem,
-      });
+      erros.push({ projetoId: id, arquivo: fileRel, linha: e.linha, tipo: 'feature', mensagem: e.mensagem });
     }
     return;
   }
   if (!outcome.funcionalidade) return;
 
-  let acc = accs.get(projectRoot);
-  if (!acc) {
-    acc = { root: projectRoot, config, features: [] };
-    accs.set(projectRoot, acc);
-  }
+  const acc = accs.get(projectRoot) as ProjectAcc;
   acc.features.push({
     stack,
     stackDirRel,
     fileRel,
-    fileWorkspaceRel: feature.workspaceRelPath,
+    fileWorkspaceRel: fileRel,
     parsed: outcome.funcionalidade,
   });
 }
@@ -207,8 +206,6 @@ async function buildProject(
   erros: ErroModel[],
   appConfig: AppConfig
 ): Promise<{ projeto: ProjetoModel; stamps: ReportStamp[] }> {
-  const workspace =
-    appConfig.workspaces.find((w) => root === w || root.startsWith(w + sep)) ?? root;
   const id = projectId(root);
   const nome = acc.config?.nome ?? basename(root);
   const origem = acc.config ? 'config' : 'auto';
@@ -398,7 +395,7 @@ async function buildProject(
     id,
     nome,
     descricao: acc.config?.descricao ?? '',
-    caminho: relative(workspace, root).split(sep).join('/') || '.',
+    caminho: displayPath(root, appConfig.browseRoots, appConfig.browseLabel),
     origem,
     stacks: stackModels,
     ref: await readGitRef(root),

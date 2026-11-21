@@ -7,7 +7,7 @@ export default tseslint.config(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
-      'fixtures/**',
+      'tests/fixtures/**',
       'apps/web/dist/**',
       'playwright-report/**',
     ],

@@ -18,7 +18,6 @@ playwright-report/
 test-results/
 
 # Fixtures: relatórios de execução são dados de teste, não artefatos de build.
-!fixtures/**/build/
-!fixtures/**/target/
-!fixtures/**/test-results/
-!apps/server/.env.development
+!tests/fixtures/**/build/
+!tests/fixtures/**/target/
+!tests/fixtures/**/test-results/

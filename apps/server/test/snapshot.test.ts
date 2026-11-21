@@ -5,19 +5,23 @@ import { buildSnapshot } from '../src/snapshot.js';
 import type { Snapshot } from '../src/model.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const FIXTURES = join(here, '..', '..', '..', 'fixtures');
+const FIXTURES = join(here, '..', '..', '..', 'tests', 'fixtures');
 
 let snap: Snapshot;
 
 beforeAll(async () => {
-  const result = await buildSnapshot({
-    workspaces: [FIXTURES],
-    host: '127.0.0.1',
-    port: 0,
-    scanIntervalSeconds: 0,
-    dataDir: join(here, '.tmp'),
-    logLevel: 'error',
-  });
+  const result = await buildSnapshot(
+    {
+      browseRoots: [join(here, '..', '..', '..')],
+      browseLabel: '~',
+      host: '127.0.0.1',
+      port: 0,
+      scanIntervalSeconds: 0,
+      dataDir: join(here, '.tmp'),
+      logLevel: 'error',
+    },
+    [{ root: join(FIXTURES, 'marketplace') }, { root: join(FIXTURES, 'projeto-sem-config') }],
+  );
   snap = result;
 });
 

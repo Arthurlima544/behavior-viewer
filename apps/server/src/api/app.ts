@@ -1,5 +1,5 @@
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, promises as fsp } from 'node:fs';
+import { dirname, join } from 'node:path';
 import Fastify, {
   type FastifyBaseLogger,
   type FastifyInstance,
@@ -15,6 +15,12 @@ import {
   type Stack,
 } from '@behavior-viewer/domain';
 import type { AppConfig } from '../config.js';
+import { ApiError } from '../errors.js';
+import { descobrirProjetos } from '../candidates.js';
+import { displayPath, isInside, resolveAllowed } from '../paths.js';
+import { discoverFeatures } from '../scanner/discover.js';
+import { hasManifest } from '../scanner/manifests.js';
+import { projectId } from '../snapshot.js';
 import { lastCommitOf } from '../git.js';
 import type { ProjetoModel, RegraModel, Snapshot } from '../model.js';
 import { HISTORY_SIZE, type Store } from '../store.js';
@@ -31,15 +37,6 @@ export interface AppDeps {
   webDir: string;
 }
 
-class ApiError extends Error {
-  constructor(
-    readonly status: number,
-    readonly codigo: string,
-    message: string
-  ) {
-    super(message);
-  }
-}
 
 const STATUS_VALUES: RuleStatus[] = [
   'passando',
@@ -48,6 +45,41 @@ const STATUS_VALUES: RuleStatus[] = [
   'sem-execucao',
   'sem-cobertura',
 ];
+
+/** Caminho real de uma pasta, ou o próprio caminho se não puder ser resolvido. */
+async function realOrSelf(path: string): Promise<string> {
+  return fsp.realpath(path).catch(() => path);
+}
+
+/** Pasta que parece a raiz de um projeto: tem .git, .behavior.yml ou manifesto de stack. */
+async function pareceProjeto(dir: string): Promise<boolean> {
+  if (existsSync(join(dir, '.git')) || existsSync(join(dir, '.behavior.yml'))) return true;
+  return hasManifest(dir);
+}
+
+/** Resumo de um projeto para as listas da interface. */
+function resumoProjeto(p: ProjetoModel, selection: Map<string, boolean>) {
+  return {
+    id: p.id,
+    nome: p.nome,
+    descricao: p.descricao,
+    caminho: p.caminho,
+    origem: p.origem,
+    selecionado: selection.get(p.id) !== false,
+    stacks: p.stacks.map((s) => ({
+      id: s.id,
+      rotulo: STACK_LABEL[s.id],
+      caminho: s.caminho,
+      arquivos: s.arquivos,
+    })),
+    ref: p.ref,
+    sincronizadoEm: p.sincronizadoEm,
+    contadores: p.contadores,
+    status: p.status,
+    divergencias: p.divergencias.length,
+    avisos: p.avisos,
+  };
+}
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({
@@ -164,33 +196,142 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     };
   });
 
+  // ---- Navegação de pastas e registro de projetos -------------------------
+
+  /** Lista pastas dentro das raízes permitidas, para o usuário escolher um projeto. */
+  app.get<{ Querystring: { caminho?: string } }>(`${api}/sistema/pastas`, async (req) => {
+    const roots = deps.config.browseRoots;
+    const label = deps.config.browseLabel;
+    if (!req.query.caminho) {
+      return {
+        caminho: null,
+        exibicao: label,
+        pai: null,
+        itens: await Promise.all(
+          roots.map(async (r) => ({
+            nome: label,
+            caminho: await realOrSelf(r),
+            ehProjeto: false,
+          })),
+        ),
+      };
+    }
+    const real = await resolveAllowed(req.query.caminho, roots, label);
+    const entries = await fsp.readdir(real, { withFileTypes: true }).catch(() => {
+      throw new ApiError(403, 'sem-permissao', 'sem permissão para listar esta pasta');
+    });
+    const itens: { nome: string; caminho: string; ehProjeto: boolean }[] = [];
+    for (const entry of entries.slice(0, 2000)) {
+      if (!entry.isDirectory() || entry.name.startsWith('.')) continue;
+      const full = join(real, entry.name);
+      itens.push({ nome: entry.name, caminho: full, ehProjeto: await pareceProjeto(full) });
+    }
+    itens.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+    const parent = dirname(real);
+    const raizAtual = roots.find((r) => isInside(real, r));
+    const pai = raizAtual && parent !== real && isInside(parent, raizAtual) ? parent : null;
+    return {
+      caminho: real,
+      exibicao: displayPath(real, roots, label),
+      pai,
+      ehProjeto: await pareceProjeto(real),
+      itens: itens.slice(0, 1000),
+    };
+  });
+
+  /** Identifica os projetos de uma pasta escolhida, sem registrar nada ainda (RF-01, RF-03). */
+  app.post<{ Body: { caminho?: unknown } }>(`${api}/descobertas`, async (req) => {
+    const real = await resolveAllowed(req.body?.caminho, deps.config.browseRoots, deps.config.browseLabel);
+    const registrados = new Set(deps.store.registeredList().map((r) => r.id));
+    const resultado = await descobrirProjetos(real, {
+      roots: deps.config.browseRoots,
+      label: deps.config.browseLabel,
+      registrados,
+    });
+    return { pasta: displayPath(real, deps.config.browseRoots, deps.config.browseLabel), ...resultado };
+  });
+
+  /** Registra um projeto (RF-02). A pasta precisa conter pelo menos um `.feature`. */
+  app.post<{ Body: { caminho?: unknown } }>(`${api}/projetos`, async (req, reply) => {
+    const real = await resolveAllowed(req.body?.caminho, deps.config.browseRoots, deps.config.browseLabel);
+    const id = projectId(real);
+    if (deps.store.registeredList().some((r) => r.id === id)) {
+      throw new ApiError(409, 'projeto-ja-registrado', 'este projeto já está registrado');
+    }
+    const discovery = await discoverFeatures(real, { maxEntries: 200_000, deadlineMs: 20_000 });
+    if (discovery.features.length === 0) {
+      throw new ApiError(
+        422,
+        'sem-bdd',
+        'nenhum arquivo .feature encontrado nesta pasta. Escolha a pasta raiz do projeto ou de uma das suas stacks.',
+      );
+    }
+    deps.store.registerProject(id, real);
+    await deps.state.refresh();
+    const projeto = deps.state.snapshot?.projetos.find((p) => p.id === id);
+    return reply.code(201).send(projeto ? resumoProjeto(projeto, deps.store.selectionMap()) : { id });
+  });
+
+  /** Remove o registro do projeto e seu histórico. Os arquivos do usuário nunca são tocados. */
+  app.delete<{ Params: { id: string } }>(`${api}/projetos/:id`, async (req, reply) => {
+    const removido = deps.store.unregisterProject(req.params.id);
+    if (!removido) throw new ApiError(404, 'projeto-nao-encontrado', 'projeto não registrado');
+    await deps.state.refresh();
+    return reply.code(204).send();
+  });
+
+  /** Estrutura identificada do projeto: stacks, funcionalidades por arquivo e testes BDD (RF-03, RF-04). */
+  app.get<{ Params: { id: string } }>(`${api}/projetos/:id/estrutura`, async (req) => {
+    const p = projectOrFail(snapshotOrFail(), req.params.id);
+    const porArquivo = new Map<string, { stack: Stack; arquivo: string; regras: number; cenarios: number }>();
+    for (const r of p.regras) {
+      for (const i of r.implementacoes) {
+        const key = `${i.stack}|${i.arquivo}`;
+        const atual = porArquivo.get(key) ?? { stack: i.stack, arquivo: i.arquivo, regras: 0, cenarios: 0 };
+        atual.regras++;
+        atual.cenarios += i.cenarios.length;
+        porArquivo.set(key, atual);
+      }
+    }
+    const arquivosFeature = p.funcionalidades.flatMap((f) =>
+      f.arquivos.map((a) => ({
+        funcionalidade: f.nome,
+        stack: a.stack,
+        rotulo: STACK_LABEL[a.stack],
+        arquivo: a.arquivo,
+        idioma: a.idioma,
+        regras: porArquivo.get(`${a.stack}|${a.arquivo}`)?.regras ?? 0,
+        cenarios: porArquivo.get(`${a.stack}|${a.arquivo}`)?.cenarios ?? 0,
+      })),
+    );
+    arquivosFeature.sort((a, b) => a.funcionalidade.localeCompare(b.funcionalidade, 'pt-BR') || a.arquivo.localeCompare(b.arquivo));
+    return {
+      projeto: { id: p.id, nome: p.nome, caminho: p.caminho, origem: p.origem, descricao: p.descricao },
+      stacks: p.stacks.map((s) => ({
+        id: s.id,
+        rotulo: STACK_LABEL[s.id],
+        caminho: s.caminho,
+        arquivos: s.arquivos,
+        relatorios: s.relatorios,
+        runner: RUNNER_LABEL[s.id],
+      })),
+      testes: {
+        arquivosFeature: arquivosFeature.length,
+        funcionalidades: p.funcionalidades.length,
+        regras: p.contadores.regras,
+        cenarios: p.contadores.cenarios,
+      },
+      funcionalidades: arquivosFeature,
+      erros: snapshotOrFail().erros.filter((e) => e.projetoId === p.id),
+    };
+  });
+
   // ---- Projetos ------------------------------------------------------------
 
   app.get(`${api}/projetos`, async () => {
     const snap = snapshotOrFail();
     const selection = deps.store.selectionMap();
-    return {
-      items: snap.projetos.map((p) => ({
-        id: p.id,
-        nome: p.nome,
-        descricao: p.descricao,
-        caminho: p.caminho,
-        origem: p.origem,
-        selecionado: isSelected(p.id, selection),
-        stacks: p.stacks.map((s) => ({
-          id: s.id,
-          rotulo: STACK_LABEL[s.id],
-          caminho: s.caminho,
-          arquivos: s.arquivos,
-        })),
-        ref: p.ref,
-        sincronizadoEm: p.sincronizadoEm,
-        contadores: p.contadores,
-        status: p.status,
-        divergencias: p.divergencias.length,
-        avisos: p.avisos,
-      })),
-    };
+    return { items: snap.projetos.map((p) => resumoProjeto(p, selection)) };
   });
 
   app.put<{ Params: { id: string }; Body: { selecionado?: unknown } }>(

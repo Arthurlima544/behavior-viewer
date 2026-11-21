@@ -40,7 +40,8 @@ export class AppState {
 
   private async run(): Promise<Snapshot> {
     const started = Date.now();
-    const result = await buildSnapshot(this.config);
+    const registrados = this.store.registeredList().map((r) => ({ root: r.caminho }));
+    const result = await buildSnapshot(this.config, registrados);
     const { reportStamps, raizes, ...snapshot } = result;
     for (const stamp of reportStamps) this.recordHistory(stamp);
     this.current = snapshot;

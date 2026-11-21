@@ -18,7 +18,29 @@ export const IGNORED_DIRS = new Set([
   '.idea',
   '.vscode',
   'Pods',
+  // Pastas de sistema e de cache que tornam a varredura da pasta pessoal lenta e nunca têm BDD.
+  'Library',
+  'AppData',
+  'snap',
+  'venv',
+  '.venv',
+  '__pycache__',
+  '.pub-cache',
+  '.gradle',
+  '.m2',
+  '.npm',
+  '.cargo',
+  '.rustup',
+  '.nvm',
+  '.pyenv',
+  '.Trash',
 ]);
+
+/** Limites de uma varredura de descoberta: evita travar em pastas enormes (RNF-06). */
+export interface DiscoveryLimits {
+  maxEntries?: number;
+  deadlineMs?: number;
+}
 
 export interface FeatureFileRef {
   /** Caminho absoluto do `.feature`. */
@@ -31,14 +53,28 @@ export interface Discovery {
   features: FeatureFileRef[];
   /** Diretórios que são raiz de projeto por marcador explícito (.git ou .behavior.yml). */
   markerDirs: Set<string>;
+  /** true quando algum limite foi atingido e a lista pode estar incompleta. */
+  parcial: boolean;
 }
 
 /** Percorre uma pasta raiz coletando arquivos `.feature` e diretórios-marcadores. */
-export async function discoverFeatures(workspaceRoot: string): Promise<Discovery> {
+export async function discoverFeatures(
+  workspaceRoot: string,
+  limits: DiscoveryLimits = {},
+): Promise<Discovery> {
   const features: FeatureFileRef[] = [];
   const markerDirs = new Set<string>();
+  const maxEntries = limits.maxEntries ?? 300_000;
+  const deadline = Date.now() + (limits.deadlineMs ?? 20_000);
+  let visited = 0;
+  let parcial = false;
 
   async function walk(dir: string): Promise<void> {
+    if (parcial) return;
+    if (visited > maxEntries || Date.now() > deadline) {
+      parcial = true;
+      return;
+    }
     let entries;
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
@@ -46,6 +82,7 @@ export async function discoverFeatures(workspaceRoot: string): Promise<Discovery
       return;
     }
     for (const entry of entries) {
+      visited++;
       const full = join(dir, entry.name);
       if (entry.isSymbolicLink()) continue;
       if (entry.name === '.git') {
@@ -53,6 +90,8 @@ export async function discoverFeatures(workspaceRoot: string): Promise<Discovery
         continue;
       }
       if (entry.isDirectory()) {
+        // Pastas ocultas (exceto as que já tratamos acima) não têm código de projeto relevante.
+        if (entry.name.startsWith('.')) continue;
         if (IGNORED_DIRS.has(entry.name)) continue;
         await walk(full);
       } else if (entry.isFile()) {
@@ -69,7 +108,7 @@ export async function discoverFeatures(workspaceRoot: string): Promise<Discovery
   }
 
   await walk(workspaceRoot);
-  return { features, markerDirs };
+  return { features, markerDirs, parcial };
 }
 
 export interface ResolvedFeature {

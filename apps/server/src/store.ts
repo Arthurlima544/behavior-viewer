@@ -38,8 +38,38 @@ export class Store {
         status TEXT NOT NULL,
         executado_em TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS projeto_registrado (
+        id TEXT PRIMARY KEY,
+        caminho TEXT NOT NULL UNIQUE,
+        criado_em TEXT NOT NULL
+      );
       CREATE INDEX IF NOT EXISTS execucao_regra ON execucao (projeto_id, stack, regra_id, id);
     `);
+  }
+
+  /** Projetos que o usuário registrou, na ordem em que foram adicionados. */
+  registeredList(): { id: string; caminho: string; criadoEm: string }[] {
+    const rows = this.db
+      .prepare('SELECT id, caminho, criado_em FROM projeto_registrado ORDER BY criado_em, caminho')
+      .all() as { id: string; caminho: string; criado_em: string }[];
+    return rows.map((r) => ({ id: r.id, caminho: r.caminho, criadoEm: r.criado_em }));
+  }
+
+  registerProject(id: string, caminho: string): void {
+    this.db
+      .prepare('INSERT INTO projeto_registrado (id, caminho, criado_em) VALUES (?, ?, ?)')
+      .run(id, caminho, new Date().toISOString());
+  }
+
+  /** Remove o registro e o histórico do projeto. Retorna false quando não existia. */
+  unregisterProject(id: string): boolean {
+    const tx = this.db.transaction(() => {
+      this.db.prepare('DELETE FROM execucao WHERE projeto_id = ?').run(id);
+      this.db.prepare('DELETE FROM sincronizacao_stack WHERE projeto_id = ?').run(id);
+      this.db.prepare('DELETE FROM projeto_selecao WHERE projeto_id = ?').run(id);
+      return this.db.prepare('DELETE FROM projeto_registrado WHERE id = ?').run(id).changes;
+    });
+    return tx() > 0;
   }
 
   /** Retorna a seleção salva; projetos sem registro ficam selecionados por padrão. */

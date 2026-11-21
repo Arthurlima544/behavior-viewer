@@ -1,13 +1,21 @@
-import { readFileSync } from 'node:fs';
+import { promises as fsp, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pino from 'pino';
-import { loadConfig } from './config.js';
+import { loadConfig, type AppConfig } from './config.js';
 import { buildApp } from './api/app.js';
 import { Store, storeFilePath } from './store.js';
 import { AppState } from './state.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+/** Raízes de navegação em caminho real, para que a validação de caminhos seja consistente. */
+async function canonicalRoots(config: AppConfig): Promise<AppConfig> {
+  const browseRoots = await Promise.all(
+    config.browseRoots.map((r) => fsp.realpath(r).catch(() => r)),
+  );
+  return { ...config, browseRoots };
+}
 
 function readVersion(): string {
   try {
@@ -21,7 +29,7 @@ function readVersion(): string {
 }
 
 async function main(): Promise<void> {
-  const config = loadConfig();
+  const config = await canonicalRoots(loadConfig());
   const store = new Store(storeFilePath(config.dataDir));
   const webDir = process.env.BEHAVIOR_WEB_DIR ?? join(here, '..', '..', 'web', 'dist');
 
@@ -48,7 +56,7 @@ async function main(): Promise<void> {
 
   await app.listen({ host: config.host, port: config.port });
   logger.info(
-    { workspaces: config.workspaces, dataDir: config.dataDir },
+    { browseRoots: config.browseRoots, dataDir: config.dataDir },
     'Behavior Viewer iniciado'
   );
 
