@@ -11,6 +11,7 @@ import { SegmentedControl } from '../components/SegmentedControl';
 import { ScenarioCard } from '../components/ScenarioCard';
 import { StackBanner } from '../components/StackBanner';
 import { StatusChip } from '../components/StatusChip';
+import { StackIcon } from '../components/StackIcon';
 import { Tag } from '../components/Tag';
 import { plural, rotuloStatus, STACK_LABEL } from '../lib/format';
 import { principalDe } from '../lib/rule';
@@ -57,7 +58,7 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
   }
 
   return (
-    <>
+    <div className={styles.page}>
       <header className={styles.header}>
         <div className={styles.headLeft}>
           <Breadcrumb
@@ -78,6 +79,12 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
             {telaTexto ? <span className={styles.tela}>Tela: {telaTexto}</span> : null}
             {regra.tags.map((t) => (
               <Tag key={t}>{t.startsWith('@') ? t : `@${t}`}</Tag>
+            ))}
+            {regra.implementacoes.map((i) => (
+              <span key={i.stack} title={i.rotulo} className={styles.logo}>
+                <StackIcon stack={i.stack} size={16} />
+                <span className="sr-only">{i.rotulo}</span>
+              </span>
             ))}
           </div>
         </div>
@@ -136,7 +143,7 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
           ) : null}
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

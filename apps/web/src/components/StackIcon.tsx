@@ -5,8 +5,18 @@ interface Props {
   size?: number;
 }
 
-/** Ícones de stack fixos do design (docs/design §2.4): celular, janela e servidor. */
+/** Logo oficial das linguagens (assets em public/stacks, CC0 via Simple Icons). Gherkin genérico usa desenho próprio. */
+const LOGO: Partial<Record<Stack, string>> = {
+  flutter: '/stacks/flutter.svg',
+  typescript: '/stacks/typescript.svg',
+  java: '/stacks/java.svg',
+};
+
 export function StackIcon({ stack, size = 16 }: Props) {
+  const logo = LOGO[stack];
+  if (logo) {
+    return <img src={logo} width={size} height={size} alt="" aria-hidden="true" style={{ display: 'block', flex: 'none' }} />;
+  }
   const common = {
     width: size,
     height: size,
@@ -17,35 +27,10 @@ export function StackIcon({ stack, size = 16 }: Props) {
     'aria-hidden': true,
     focusable: false,
   } as const;
-  switch (stack) {
-    case 'flutter':
-      return (
-        <svg {...common}>
-          <rect x="5" y="2" width="10" height="16" rx="2" />
-          <path d="M9 15h2" />
-        </svg>
-      );
-    case 'typescript':
-      return (
-        <svg {...common}>
-          <rect x="2" y="4" width="16" height="12" rx="2" />
-          <path d="M2 8h16" />
-        </svg>
-      );
-    case 'java':
-      return (
-        <svg {...common}>
-          <rect x="3" y="3" width="14" height="6" rx="1.5" />
-          <rect x="3" y="11" width="14" height="6" rx="1.5" />
-          <path d="M6 6h1M6 14h1" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <path d="M6 2h6l4 4v12H6z" />
-          <path d="M12 2v4h4M8 11h6M8 14h6" />
-        </svg>
-      );
-  }
+  return (
+    <svg {...common}>
+      <path d="M6 2h6l4 4v12H6z" />
+      <path d="M12 2v4h4M8 11h6M8 14h6" />
+    </svg>
+  );
 }

@@ -23,7 +23,7 @@ export function StackRow({ stack, rotulo, status, localizacao, historico, onCopy
         <StackIcon stack={stack} size={16} />
       </span>
       <div className={styles.info}>
-        <span className={styles.nome}>{rotulo}</span>
+        <span className="sr-only">{rotulo}</span>
         {localizacao ? (
           <span className={`mono ${styles.path}`}>{localizacao}</span>
         ) : (

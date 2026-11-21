@@ -1,15 +1,29 @@
+/* Página inteira em um bloco só: o espaçamento entre seções do layout não se aplica dentro dela. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: -12px;
+}
+
+.logo {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
 .header {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px 24px;
+  gap: 8px 24px;
 }
 
 .headLeft {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   max-width: 900px;
   min-width: 0;
 }
