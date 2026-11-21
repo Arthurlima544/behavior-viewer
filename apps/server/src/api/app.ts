@@ -63,6 +63,7 @@ async function pareceProjeto(dir: string): Promise<boolean> {
 function resumoProjeto(p: ProjetoModel, selection: Map<string, boolean>) {
   return {
     id: p.id,
+    atualizacoes: p.atualizacoes,
     nome: p.nome,
     descricao: p.descricao,
     caminho: p.caminho,
@@ -273,6 +274,19 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     await deps.state.refresh();
     const projeto = deps.state.snapshot?.projetos.find((p) => p.id === id);
     return reply.code(201).send(projeto ? resumoProjeto(projeto, deps.store.selectionMap()) : { id });
+  });
+
+  /** Marca o projeto como visto: a pasta atual vira a linha de base e o aviso de atualizações some. */
+  app.post<{ Params: { id: string } }>(`${api}/projetos/:id/visto`, async (req) => {
+    const p = projectOrFail(snapshotOrFail(), req.params.id);
+    deps.store.setBaseline(p.id, {
+      arquivos: p.arquivosHash,
+      contadores: { regras: p.contadores.regras, cenarios: p.contadores.cenarios },
+      vistoEm: new Date().toISOString(),
+    });
+    await deps.state.refresh();
+    const atual = deps.state.snapshot?.projetos.find((x) => x.id === p.id);
+    return { id: p.id, atualizacoes: atual?.atualizacoes ?? null };
   });
 
   /** Remove o registro do projeto e seu histórico. Os arquivos do usuário nunca são tocados. */

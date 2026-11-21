@@ -320,3 +320,44 @@ describe('sincronizar (botão Sincronizar)', () => {
     }
   });
 });
+
+describe('atualizações da pasta de testes (SHA-256)', () => {
+  it('avisa quando a pasta muda e some quando o usuário marca como visto', async () => {
+    const { mkdirSync, writeFileSync, rmSync: rm } = await import('node:fs');
+    const pasta = join(REPO, 'tests', `tmp-aviso-${process.pid}-${Date.now()}`);
+    const feature = join(pasta, 'features', 'a.feature');
+    try {
+      mkdirSync(join(pasta, 'features'), { recursive: true });
+      writeFileSync(join(pasta, 'package.json'), JSON.stringify({ devDependencies: { '@cucumber/cucumber': '^11.0.0' } }));
+      writeFileSync(feature, 'Feature: Aviso\n  Scenario: um\n    Given algo\n');
+      const reg = await app.inject({ method: 'POST', url: '/api/v1/projetos', payload: { caminho: pasta } });
+      const id = reg.json().id;
+      const atualizacoes = async () =>
+        (await app.inject({ method: 'GET', url: '/api/v1/projetos' })).json().items.find((p: { id: string }) => p.id === id).atualizacoes;
+
+      // Recém-registrado: a pasta atual é a linha de base, então nada pendente.
+      expect((await atualizacoes()).pendentes).toBe(false);
+
+      writeFileSync(feature, 'Feature: Aviso\n  Scenario: um\n    Given algo\n  Scenario: dois\n    Given outro\n');
+      await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      let a = await atualizacoes();
+      expect(a).toMatchObject({ pendentes: true, alterados: ['features/a.feature'], antes: { cenarios: 1 }, agora: { cenarios: 2 } });
+
+      const visto = await app.inject({ method: 'POST', url: `/api/v1/projetos/${id}/visto` });
+      expect(visto.statusCode).toBe(200);
+      expect((await atualizacoes()).pendentes).toBe(false);
+
+      writeFileSync(join(pasta, 'features', 'b.feature'), 'Feature: Novo\n  Scenario: novo\n    Given x\n');
+      rm(feature);
+      await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      a = await atualizacoes();
+      expect(a.pendentes).toBe(true);
+      expect(a.novos).toEqual(['features/b.feature']);
+      expect(a.removidos).toEqual(['features/a.feature']);
+
+      await app.inject({ method: 'DELETE', url: `/api/v1/projetos/${id}` });
+    } finally {
+      rm(pasta, { recursive: true, force: true });
+    }
+  });
+});

@@ -11,8 +11,20 @@ export interface StatusCounts {
   percentualPassando: number;
 }
 
+export interface Atualizacoes {
+  pendentes: boolean;
+  assinatura: string;
+  novos: string[];
+  alterados: string[];
+  removidos: string[];
+  antes: { regras: number; cenarios: number } | null;
+  agora: { regras: number; cenarios: number };
+  vistoEm: string | null;
+}
+
 export interface ProjectSummary {
   id: string;
+  atualizacoes: Atualizacoes;
   nome: string;
   descricao: string;
   caminho: string;

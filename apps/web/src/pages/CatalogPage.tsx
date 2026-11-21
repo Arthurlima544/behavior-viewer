@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useFuncionalidades, useProjetos, useRegras } from '../api/queries';
 import type { RuleStatus, RuleSummary, Stack } from '../api/types';
 import { Breadcrumb } from '../components/Breadcrumb';
+import { AtualizacoesBanner } from '../components/AtualizacoesBanner';
 import { ButtonLink, Button } from '../components/Button';
 import { EmptyState, ErrorState, Loading } from '../components/States';
 import { RuleGroup } from '../components/RuleGroup';
@@ -81,6 +82,8 @@ export function CatalogPage() {
           {apresentarLabel}
         </ButtonLink>
       </header>
+
+      <AtualizacoesBanner projeto={projeto} />
 
       <div role="toolbar" aria-label="Filtros" className={styles.toolbar}>
         <SearchField

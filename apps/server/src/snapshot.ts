@@ -31,6 +31,9 @@ import {
   type RegraParsed,
 } from './parser/feature.js';
 import { readGitRef } from './git.js';
+import { calcularAtualizacoes, sha256 } from './atualizacoes.js';
+import { CONFIG_FILE } from './scanner/projectConfig.js';
+import { readText } from './util/fs.js';
 import type {
   CenarioModel,
   ErroModel,
@@ -55,6 +58,8 @@ interface ProjectAcc {
   root: string;
   config: ProjectConfig | null;
   features: FeatureEntry[];
+  /** Hash SHA-256 de cada arquivo lido (.feature e .behavior.yml), por caminho relativo à raiz. */
+  arquivos: Record<string, string>;
 }
 
 interface ImplDraft {
@@ -113,7 +118,10 @@ export async function buildSnapshot(
       erros.push({ projetoId: id, arquivo: '.behavior.yml', linha: null, tipo: 'config', mensagem: read.error });
     }
     const config = read.config;
-    accs.set(root, { root, config, features: [] });
+    const arquivos: Record<string, string> = {};
+    const configRaw = await readText(join(root, CONFIG_FILE));
+    if (configRaw !== null) arquivos[CONFIG_FILE] = sha256(configRaw);
+    accs.set(root, { root, config, features: [], arquivos });
 
     for (const feature of discovery.features) {
       const fileRel = relative(root, feature.absPath).split(sep).join('/');
@@ -164,6 +172,7 @@ async function collectFeature(
   let source: string;
   try {
     source = await fs.readFile(feature.absPath, 'utf8');
+    (accs.get(projectRoot) as ProjectAcc).arquivos[fileRel] = sha256(source);
   } catch (err) {
     erros.push({
       projetoId: id,
@@ -446,6 +455,8 @@ async function buildProject(
     status: summarizeStatuses(regras.map((r) => r.status)),
     funcionalidades,
     regras,
+    arquivosHash: acc.arquivos,
+    atualizacoes: calcularAtualizacoes({ arquivos: acc.arquivos, contadores: { regras: regras.length, cenarios } }, null),
     matriz,
     divergencias,
     avisos: regras.filter((r) => r.avisos.length > 0).length,

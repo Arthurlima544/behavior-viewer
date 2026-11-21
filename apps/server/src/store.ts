@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import Database from 'better-sqlite3';
 import type { RuleStatus, Stack } from '@behavior-viewer/domain';
+import type { LinhaDeBase } from './atualizacoes.js';
 
 /** Quantas execuções por regra e stack são mantidas (RF-20). */
 export const HISTORY_SIZE = 14;
@@ -43,6 +44,10 @@ export class Store {
         caminho TEXT NOT NULL UNIQUE,
         criado_em TEXT NOT NULL
       );
+      CREATE TABLE IF NOT EXISTS linha_de_base (
+        projeto_id TEXT PRIMARY KEY,
+        dados TEXT NOT NULL
+      );
       CREATE INDEX IF NOT EXISTS execucao_regra ON execucao (projeto_id, stack, regra_id, id);
     `);
   }
@@ -61,9 +66,24 @@ export class Store {
       .run(id, caminho, new Date().toISOString());
   }
 
+  /** Linha de base do projeto (última versão vista pelo usuário). Null quando ainda não existe. */
+  getBaseline(projetoId: string): LinhaDeBase | null {
+    const row = this.db.prepare('SELECT dados FROM linha_de_base WHERE projeto_id = ?').get(projetoId) as
+      | { dados: string }
+      | undefined;
+    return row ? (JSON.parse(row.dados) as LinhaDeBase) : null;
+  }
+
+  setBaseline(projetoId: string, base: LinhaDeBase): void {
+    this.db
+      .prepare('INSERT INTO linha_de_base (projeto_id, dados) VALUES (?, ?) ON CONFLICT(projeto_id) DO UPDATE SET dados = excluded.dados')
+      .run(projetoId, JSON.stringify(base));
+  }
+
   /** Remove o registro e o histórico do projeto. Retorna false quando não existia. */
   unregisterProject(id: string): boolean {
     const tx = this.db.transaction(() => {
+      this.db.prepare('DELETE FROM linha_de_base WHERE projeto_id = ?').run(id);
       this.db.prepare('DELETE FROM execucao WHERE projeto_id = ?').run(id);
       this.db.prepare('DELETE FROM sincronizacao_stack WHERE projeto_id = ?').run(id);
       this.db.prepare('DELETE FROM projeto_selecao WHERE projeto_id = ?').run(id);

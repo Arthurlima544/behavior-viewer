@@ -79,6 +79,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ caminho }),
     }),
+  marcarVisto: (id: string) =>
+    request<{ id: string; atualizacoes: import('./types').Atualizacoes | null }>(`/projetos/${encodeURIComponent(id)}/visto`, {
+      method: 'POST',
+    }),
   removerProjeto: (id: string) => request<void>(`/projetos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
   estrutura: (id: string) =>
     request<import('./types').ProjetoEstrutura>(`/projetos/${encodeURIComponent(id)}/estrutura`),

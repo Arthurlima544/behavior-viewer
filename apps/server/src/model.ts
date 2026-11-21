@@ -5,6 +5,7 @@ import type {
   Stack,
   StatusCounts,
 } from '@behavior-viewer/domain';
+import type { AtualizacoesModel } from './atualizacoes.js';
 
 export interface Passo {
   palavra: string;
@@ -139,6 +140,10 @@ export interface ErroModel {
 
 export interface ProjetoModel {
   id: string;
+  /** Hash SHA-256 de cada arquivo da pasta de testes (.feature e .behavior.yml), por caminho relativo. */
+  arquivosHash: Record<string, string>;
+  /** Atualizações da pasta desde a última vez que o usuário marcou o projeto como visto. */
+  atualizacoes: AtualizacoesModel;
   nome: string;
   descricao: string;
   /** Caminho relativo à pasta raiz do workspace que contém o projeto. */

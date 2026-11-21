@@ -62,3 +62,32 @@ test.describe('projetos registrados e estrutura (RF-03, RF-04)', () => {
     await expect(page.getByRole('heading', { name: 'Stacks identificadas' })).toBeVisible();
   });
 });
+
+test.describe('aviso de atualizações na pasta de testes (SHA-256)', () => {
+  test('mostra o aviso quando a pasta muda e some ao marcar como visto', async ({ page, request }) => {
+    const { mkdirSync, writeFileSync, rmSync } = await import('node:fs');
+    const { join, resolve } = await import('node:path');
+    const pasta = resolve('tests', `tmp-e2e-aviso-${Date.now()}`);
+    const feature = join(pasta, 'features', 'a.feature');
+    try {
+      mkdirSync(join(pasta, 'features'), { recursive: true });
+      writeFileSync(join(pasta, 'package.json'), JSON.stringify({ devDependencies: { '@cucumber/cucumber': '^11.0.0' } }));
+      writeFileSync(feature, 'Feature: Aviso E2E\n  Scenario: um\n    Given algo\n');
+      const reg = await request.post('/api/v1/projetos', { data: { caminho: pasta } });
+      const id = ((await reg.json()) as { id: string }).id;
+
+      writeFileSync(feature, 'Feature: Aviso E2E\n  Scenario: um\n    Given algo\n  Scenario: dois\n    Given outro\n');
+      await request.post('/api/v1/varreduras');
+
+      await page.goto(`/projetos/${id}`);
+      const aviso = page.getByRole('status', { name: /Atualizações em/ });
+      await expect(aviso).toContainText('1 alterado');
+      await page.getByRole('button', { name: 'Marcar como visto' }).click();
+      await expect(aviso).toHaveCount(0);
+
+      await request.delete(`/api/v1/projetos/${id}`);
+    } finally {
+      rmSync(pasta, { recursive: true, force: true });
+    }
+  });
+});

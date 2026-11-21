@@ -1,0 +1,67 @@
+.banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border-button);
+  border-left: 3px solid var(--text-2);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.texto {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 14px;
+  color: var(--text);
+}
+
+.meta {
+  font-size: 12px;
+  color: var(--text-muted-2);
+}
+
+.detalhes summary {
+  font-size: 12px;
+  color: var(--text-3);
+  cursor: pointer;
+  margin-top: 2px;
+}
+
+.detalhes ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.novo,
+.alterado,
+.removido {
+  display: inline-block;
+  min-width: 64px;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-icon);
+  color: var(--text-2);
+}
+
+.removido {
+  border-style: dashed;
+  color: var(--status-fail-text);
+  border-color: var(--status-fail-border-strong);
+}
+
+.banner > button {
+  flex: none;
+}

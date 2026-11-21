@@ -106,6 +106,9 @@ export function Sidebar({ recolhido, onToggle }: Props) {
                 {p.nome.charAt(0).toUpperCase()}
               </span>
               <span className={styles.label}>{p.nome}</span>
+              {p.atualizacoes.pendentes ? (
+                <span className={styles.pendente} role="img" aria-label="atualizações pendentes" title="Atualizações pendentes" />
+              ) : null}
               <span className={`mono ${styles.count} ${styles.label}`}>{p.contadores.regras}</span>
             </NavLink>
           ))}

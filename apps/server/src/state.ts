@@ -4,6 +4,7 @@ import type { Snapshot } from './model.js';
 import type { Store } from './store.js';
 
 import type { Logger } from 'pino';
+import { calcularAtualizacoes } from './atualizacoes.js';
 
 export type { Logger };
 
@@ -43,6 +44,16 @@ export class AppState {
     const registrados = this.store.registeredList().map((r) => ({ root: r.caminho }));
     const result = await buildSnapshot(this.config, registrados);
     const { reportStamps, raizes, ...snapshot } = result;
+    // Linha de base: na primeira varredura de um projeto, a pasta atual vira a versão vista.
+    for (const p of snapshot.projetos) {
+      const contadores = { regras: p.contadores.regras, cenarios: p.contadores.cenarios };
+      let base = this.store.getBaseline(p.id);
+      if (!base) {
+        base = { arquivos: p.arquivosHash, contadores, vistoEm: new Date().toISOString() };
+        this.store.setBaseline(p.id, base);
+      }
+      p.atualizacoes = calcularAtualizacoes({ arquivos: p.arquivosHash, contadores }, base);
+    }
     for (const stamp of reportStamps) this.recordHistory(stamp);
     this.current = snapshot;
     this.roots = raizes;

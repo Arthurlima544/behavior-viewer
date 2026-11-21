@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router-dom';
 import { useDivergencias, useMatriz, useProjetos, useVisaoGeral } from '../api/queries';
 import { KpiCard } from '../components/KpiCard';
 import { ProjectCard } from '../components/ProjectCard';
+import { AtualizacoesBanner } from '../components/AtualizacoesBanner';
 import { SearchField } from '../components/SearchField';
 import { ButtonLink } from '../components/Button';
 import { CoverageMatrix } from '../components/CoverageMatrix';
@@ -64,6 +65,10 @@ export function OverviewPage() {
           ) : null}
         </div>
       </header>
+
+      {visiveis.filter((p) => p.atualizacoes.pendentes).map((p) => (
+        <AtualizacoesBanner key={p.id} projeto={p} />
+      ))}
 
       <section aria-label="Indicadores" className={styles.kpis}>
         <KpiCard label="Regras de negócio" value={formatNumber(v.regras)} sub={`em ${plural(v.projetos, 'projeto', 'projetos')} visíveis`} />
