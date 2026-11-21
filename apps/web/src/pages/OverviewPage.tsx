@@ -87,12 +87,12 @@ export function OverviewPage() {
         {visiveis.length === 0 ? (
           (projetos.data?.length ?? 0) === 0 ? (
             <EmptyState title="Nenhum projeto registrado.">
-              <span>Adicione uma pasta com testes BDD para começar a ver as regras de negócio.</span>
-              <span>
+              <div>Adicione uma pasta com testes BDD para começar a ver as regras de negócio.</div>
+              <div style={{ marginTop: 12 }}>
                 <ButtonLink to="/projetos/adicionar" variant="primary">
                   Adicionar projeto
                 </ButtonLink>
-              </span>
+              </div>
             </EmptyState>
           ) : (
             <EmptyState title="Nenhum projeto selecionado.">
