@@ -1,0 +1,35 @@
+{
+  "name": "behavior-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Visualizador open source de regras de negocio extraidas de testes BDD.",
+  "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/domain",
+    "apps/server",
+    "apps/web"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "npm run dev -w apps/server & npm run dev -w apps/web",
+    "build": "npm run build -w packages/domain && npm run build -w apps/web && npm run build -w apps/server",
+    "typecheck": "npm run typecheck -w packages/domain && npm run typecheck -w apps/server && npm run typecheck -w apps/web",
+    "test": "npm run test -w packages/domain && npm run test -w apps/server && npm run test -w apps/web",
+    "lint": "eslint .",
+    "test:e2e": "playwright test",
+    "start": "npm run start -w apps/server"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@types/node": "^22.20.5",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.73.0",
+    "vitest": "^3.2.7"
+  }
+}

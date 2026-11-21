@@ -16,3 +16,8 @@ Thumbs.db
 *.tsbuildinfo
 playwright-report/
 test-results/
+
+# Fixtures: relatórios de execução são dados de teste, não artefatos de build.
+!fixtures/**/build/
+!fixtures/**/target/
+!fixtures/**/test-results/
