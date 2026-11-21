@@ -5,7 +5,9 @@ const PORT = 8790;
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 30_000,
-  fullyParallel: true,
+  fullyParallel: false,
+  workers: 1,
+  globalSetup: './tests/e2e/global-setup.ts',
   reporter: [['list']],
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
@@ -13,11 +15,14 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 1000 } } }],
   webServer: {
-    command: 'node apps/server/dist/main.js',
+    // Banco limpo a cada execução: os testes começam sem projetos registrados.
+    command: 'node -e "require(\'fs\').rmSync(\'data/e2e\',{recursive:true,force:true})" && node apps/server/dist/main.js',
     url: `http://127.0.0.1:${PORT}/api/v1/health`,
     reuseExistingServer: false,
     env: {
-      BEHAVIOR_WORKSPACE: 'fixtures',
+      // Raízes navegáveis: o repositório, para os testes escolherem as fixtures pela interface.
+      BEHAVIOR_BROWSE_ROOTS: process.cwd(),
+      BEHAVIOR_BROWSE_LABEL: '~',
       BEHAVIOR_DATA_DIR: 'data/e2e',
       BEHAVIOR_PORT: String(PORT),
       BEHAVIOR_LOG_LEVEL: 'warn',

@@ -5,6 +5,9 @@ import { CatalogPage } from '../pages/CatalogPage';
 import { RuleDetailPage } from '../pages/RuleDetailPage';
 import { PresentationPage } from '../pages/PresentationPage';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { ProjectsPage } from '../pages/ProjectsPage';
+import { AddProjectPage } from '../pages/AddProjectPage';
+import { StructurePage } from '../pages/StructurePage';
 
 export function App() {
   return (
@@ -13,7 +16,10 @@ export function App() {
       <Route path="projetos/:projetoId/apresentar/:funcionalidade" element={<PresentationPage />} />
       <Route element={<AppLayout />}>
         <Route index element={<OverviewPage />} />
+        <Route path="projetos" element={<ProjectsPage />} />
+        <Route path="projetos/adicionar" element={<AddProjectPage />} />
         <Route path="projetos/:projetoId" element={<CatalogPage />} />
+        <Route path="projetos/:projetoId/estrutura" element={<StructurePage />} />
         <Route path="projetos/:projetoId/regras/:regraId" element={<RuleDetailPage />} />
         <Route path="home" element={<Navigate to="/" replace />} />
         <Route path="*" element={<NotFoundPage />} />

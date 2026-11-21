@@ -11,6 +11,8 @@ export const keys = {
   divergencias: (id: string) => ['divergencias', id] as const,
   regra: (id: string, projeto: string) => ['regra', id, projeto] as const,
   busca: (q: string) => ['busca', q] as const,
+  pastas: (caminho: string | undefined) => ['pastas', caminho ?? ''] as const,
+  estrutura: (id: string) => ['estrutura', id] as const,
 };
 
 export const useHealth = () =>
@@ -53,3 +55,9 @@ export const useBusca = (q: string) =>
     enabled: q.trim().length > 0,
     placeholderData: keepPreviousData,
   });
+
+export const usePastas = (caminho: string | undefined) =>
+  useQuery({ queryKey: keys.pastas(caminho), queryFn: () => api.pastas(caminho), placeholderData: keepPreviousData });
+
+export const useEstrutura = (id: string) =>
+  useQuery({ queryKey: keys.estrutura(id), queryFn: () => api.estrutura(id), enabled: !!id });

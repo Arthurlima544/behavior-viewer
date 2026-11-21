@@ -85,9 +85,20 @@ export function OverviewPage() {
           </ul>
         </div>
         {visiveis.length === 0 ? (
-          <EmptyState title="Nenhum projeto selecionado.">
-            Marque um projeto na lista de projetos para vê-lo aqui, ou confira a variável <code>BEHAVIOR_WORKSPACE</code>.
-          </EmptyState>
+          (projetos.data?.length ?? 0) === 0 ? (
+            <EmptyState title="Nenhum projeto registrado.">
+              <span>Adicione uma pasta com testes BDD para começar a ver as regras de negócio.</span>
+              <span>
+                <ButtonLink to="/projetos/adicionar" variant="primary">
+                  Adicionar projeto
+                </ButtonLink>
+              </span>
+            </EmptyState>
+          ) : (
+            <EmptyState title="Nenhum projeto selecionado.">
+              Marque um projeto na lista da sidebar para vê-lo aqui. Isso não apaga nenhum dado.
+            </EmptyState>
+          )
         ) : (
           <div className={styles.grid}>
             {visiveis.map((p) => (

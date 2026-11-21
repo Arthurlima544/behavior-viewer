@@ -150,3 +150,63 @@ export interface Health {
   ultimaVarredura: string | null;
   projetos: number;
 }
+
+export interface PastaItem {
+  nome: string;
+  caminho: string;
+  ehProjeto: boolean;
+}
+
+export interface Pastas {
+  /** Caminho real da pasta atual, ou null quando estamos nas raízes. */
+  caminho: string | null;
+  exibicao: string;
+  pai: string | null;
+  ehProjeto?: boolean;
+  itens: PastaItem[];
+}
+
+export interface Candidato {
+  id: string;
+  caminho: string;
+  caminhoExibicao: string;
+  nome: string;
+  origem: 'auto' | 'config';
+  stacks: Stack[];
+  arquivos: number;
+  funcionalidades: number;
+  cenarios: number;
+  errosLeitura: number;
+  jaRegistrado: boolean;
+}
+
+export interface Descoberta {
+  pasta: string;
+  candidatos: Candidato[];
+  parcial: boolean;
+  featuresEncontrados: number;
+}
+
+export interface ProjetoEstrutura {
+  projeto: { id: string; nome: string; caminho: string; origem: 'auto' | 'config'; descricao: string };
+  stacks: { id: Stack; rotulo: string; caminho: string; arquivos: number; relatorios: string[]; runner: string }[];
+  testes: { arquivosFeature: number; funcionalidades: number; regras: number; cenarios: number };
+  funcionalidades: {
+    funcionalidade: string;
+    stack: Stack;
+    rotulo: string;
+    arquivo: string;
+    idioma: string;
+    regras: number;
+    cenarios: number;
+  }[];
+  erros: ErroItem[];
+}
+
+export interface ErroItem {
+  projetoId: string | null;
+  arquivo: string;
+  linha: number | null;
+  tipo: 'feature' | 'config' | 'relatorio';
+  mensagem: string;
+}

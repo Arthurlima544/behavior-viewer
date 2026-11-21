@@ -1,5 +1,5 @@
 import { NavLink, useLocation, Link } from 'react-router-dom';
-import { LayoutGrid, List, Presentation, RefreshCw } from 'lucide-react';
+import { LayoutGrid, List, Plus, Presentation, RefreshCw, Settings } from 'lucide-react';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from '../api/client';
@@ -77,8 +77,18 @@ export function Sidebar() {
           </NavLink>
         ))}
         {projetos.data && visiveis.length === 0 ? (
-          <span className={styles.hint}>Nenhum projeto selecionado.</span>
+          <span className={styles.hint}>
+            {projetos.data.length === 0 ? 'Nenhum projeto registrado.' : 'Nenhum projeto selecionado.'}
+          </span>
         ) : null}
+        <NavLink to="/projetos/adicionar" className={styles.addLink}>
+          <Plus size={14} strokeWidth={1.5} aria-hidden="true" />
+          Adicionar projeto
+        </NavLink>
+        <NavLink to="/projetos" end className={({ isActive }) => styles.addLink + (isActive ? ' ' + styles.projectActive : '')}>
+          <Settings size={14} strokeWidth={1.5} aria-hidden="true" />
+          Gerenciar projetos
+        </NavLink>
       </div>
 
       <div className={styles.footer}>

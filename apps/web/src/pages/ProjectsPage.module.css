@@ -1,0 +1,139 @@
+.success {
+  font-size: 13px;
+  color: var(--text-2);
+  border: 1px solid var(--border-icon);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px 24px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: var(--surface-2);
+}
+
+.head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.titleBox {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.path {
+  font-size: 12px;
+  color: var(--text-muted-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.desc {
+  font-size: 13px;
+  color: var(--text-muted-2);
+}
+
+.stacks {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border-icon);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wide {
+  grid-column: span 2;
+}
+
+.metricLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.metricValue {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.link {
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--border-button);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.link:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.error {
+  font-size: 13px;
+  color: var(--status-fail-text);
+}

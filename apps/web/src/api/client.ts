@@ -65,4 +65,19 @@ export const api = {
   },
   busca: (q: string) => request<{ total: number; items: import('./types').SearchItem[] }>(`/busca?q=${encodeURIComponent(q)}`),
   varrer: () => request<{ status: string }>('/varreduras', { method: 'POST' }),
+  pastas: (caminho?: string) =>
+    request<import('./types').Pastas>(`/sistema/pastas${caminho ? `?caminho=${encodeURIComponent(caminho)}` : ''}`),
+  descobrir: (caminho: string) =>
+    request<import('./types').Descoberta>('/descobertas', {
+      method: 'POST',
+      body: JSON.stringify({ caminho }),
+    }),
+  registrarProjeto: (caminho: string) =>
+    request<import('./types').ProjectSummary>('/projetos', {
+      method: 'POST',
+      body: JSON.stringify({ caminho }),
+    }),
+  removerProjeto: (id: string) => request<void>(`/projetos/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+  estrutura: (id: string) =>
+    request<import('./types').ProjetoEstrutura>(`/projetos/${encodeURIComponent(id)}/estrutura`),
 };
