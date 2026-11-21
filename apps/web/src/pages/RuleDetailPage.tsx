@@ -125,14 +125,16 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
             ]}
           />
         </div>
-        {cenarios.slice(0, visiveis).map((c) => (
-          <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
-        ))}
-        {cenarios.length > visiveis ? (
-          <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
-            Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
-          </button>
-        ) : null}
+        <div className={styles.grade}>
+          {cenarios.slice(0, visiveis).map((c) => (
+            <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
+          ))}
+          {cenarios.length > visiveis ? (
+            <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
+              Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
+            </button>
+          ) : null}
+        </div>
       </section>
     </>
   );

@@ -9,24 +9,24 @@ interface Props {
 }
 
 /**
- * Cenário do detalhe: passos à esquerda, capturas de tela ao lado (compactas, para caber
- * vários cenários na mesma tela). Sem captura, os passos ocupam a largura toda.
+ * Cenário do detalhe: o cartão com os passos e, ao lado e separadas do cartão, as capturas de
+ * tela. Sem captura, só o cartão ocupa a célula da grade.
  */
 export function ScenarioCard({ cenario, modo }: Props) {
   const comCapturas = cenario.capturas.length > 0;
   return (
-    <article className={styles.card}>
-      <header className={styles.head}>
-        <span className={styles.name}>
-          <span className="sr-only">{TIPO_LABEL[cenario.tipo]}: </span>
-          {cenario.nome}
-        </span>
-        <span className={styles.result}>
-          <StatusDot status={cenario.resultado} />
-          {RESULT_LABEL[cenario.resultado]}
-        </span>
-      </header>
-      <div className={`${styles.body} ${comCapturas ? styles.comCapturas : ''}`}>
+    <div className={`${styles.item} ${comCapturas ? styles.comCapturas : ''}`}>
+      <article className={styles.card}>
+        <header className={styles.head}>
+          <span className={styles.name}>
+            <span className="sr-only">{TIPO_LABEL[cenario.tipo]}: </span>
+            {cenario.nome}
+          </span>
+          <span className={styles.result}>
+            <StatusDot status={cenario.resultado} />
+            {RESULT_LABEL[cenario.resultado]}
+          </span>
+        </header>
         <div className={`mono ${styles.steps}`}>
           {cenario.passos.map((p, i) => (
             <div key={i} className={styles.step}>
@@ -50,19 +50,20 @@ export function ScenarioCard({ cenario, modo }: Props) {
             </table>
           ) : null}
         </div>
-        {comCapturas ? (
-          <ul className={styles.capturas} aria-label="Capturas de tela da execução">
-            {cenario.capturas.map((c, i) => (
-              <li key={`${c.arquivo}-${i}`} className={styles.captura}>
-                <a href={c.url} target="_blank" rel="noreferrer" aria-label={`Abrir captura: ${c.passo}`}>
-                  <img src={c.url} alt={`Tela durante o passo: ${c.passo}`} loading="lazy" className={styles.img} />
-                </a>
-              </li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    </article>
+      </article>
+      {comCapturas ? (
+        <ul className={styles.capturas} aria-label="Capturas de tela da execução">
+          {cenario.capturas.map((c, i) => (
+            <li key={`${c.arquivo}-${i}`} className={styles.captura}>
+              <a href={c.url} target="_blank" rel="noreferrer" aria-label={`Abrir captura: ${c.passo}`}>
+                <img src={c.url} alt={`Tela durante o passo: ${c.passo}`} loading="lazy" className={styles.img} />
+              </a>
+              <span className={styles.legenda}>{c.passo}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 

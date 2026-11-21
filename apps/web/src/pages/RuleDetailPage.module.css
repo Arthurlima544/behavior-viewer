@@ -99,3 +99,15 @@
 .more:hover {
   color: var(--text);
 }
+
+/* Dois cenários lado a lado quando a área de conteúdo é larga; um por linha quando é estreita. */
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 620px), 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+.grade > .more {
+  grid-column: 1 / -1;
+}
