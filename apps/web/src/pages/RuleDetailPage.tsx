@@ -8,17 +8,16 @@ import { Breadcrumb } from '../components/Breadcrumb';
 import { Button, ButtonLink } from '../components/Button';
 import { ErrorState, Loading } from '../components/States';
 import { SegmentedControl } from '../components/SegmentedControl';
+import { ScenarioCard } from '../components/ScenarioCard';
+import { StackRow } from '../components/StackRow';
 import { StatusChip } from '../components/StatusChip';
 import { Tag } from '../components/Tag';
-import { ImplementationCard } from '../components/ImplementationCard';
-import { TelasPanel } from '../components/TelasPanel';
-import { RunHistoryStrip } from '../components/RunHistoryStrip';
-import { ScenarioCard } from '../components/ScenarioCard';
-import { rotuloStatus, STACK_LABEL, tempoRelativo } from '../lib/format';
+import { plural, rotuloStatus, STACK_LABEL } from '../lib/format';
+import { principalDe } from '../lib/rule';
 import { rotas } from '../lib/paths';
 import styles from './RuleDetailPage.module.css';
 
-const PAGE = 2;
+const PAGE = 3;
 type Modo = 'gherkin' | 'texto';
 
 export function RuleDetailPage() {
@@ -34,29 +33,28 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
   const [modo, setModo] = useState<Modo>('gherkin');
   const [visiveis, setVisiveis] = useState(PAGE);
   const [copiado, setCopiado] = useState<string | null>(null);
-  // Cenários exibidos: a primeira stack que tem capturas (se houver), senão a primeira stack.
-  const principal =
-    regra.implementacoes.find((i) => i.cenarios.some((c) => c.capturas.length > 0)) ?? regra.implementacoes[0];
+  const principal = principalDe(regra);
   const cenarios = principal?.cenarios ?? [];
   const falhando = regra.implementacoes.find((i) => i.status === 'falhando');
-  const ultimaAlteracao = regra.implementacoes.find((i) => i.ultimaAlteracao)?.ultimaAlteracao ?? null;
-  const funcionalidadeKey = regra.funcionalidade?.key;
   const projeto = regra.projeto.id;
+  const funcionalidadeKey = regra.funcionalidade?.key ?? '';
+  const telaTexto = regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ');
+
+  function avisar(msg: string) {
+    setCopiado(msg);
+    setTimeout(() => setCopiado(null), 1800);
+  }
 
   async function copiarLink() {
     await navigator.clipboard.writeText(window.location.href);
-    setCopiado('Link copiado');
-    setTimeout(() => setCopiado(null), 1800);
+    avisar('Link copiado');
   }
 
   async function copiarGherkin(stack: string) {
     const texto = await api.gherkin(regra.id, projeto, stack);
     await navigator.clipboard.writeText(texto);
-    setCopiado('Gherkin copiado');
-    setTimeout(() => setCopiado(null), 1800);
+    avisar('Gherkin copiado');
   }
-
-  const rotuloChip = falhando ? rotuloStatus('falhando', STACK_LABEL[falhando.stack]) : rotuloStatus(regra.status);
 
   return (
     <>
@@ -72,27 +70,31 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
               { label: regra.id, mono: true },
             ]}
           />
-          <span className={`mono ${styles.id}`}>{regra.id}</span>
-          <h1 className={styles.title}>{regra.titulo}</h1>
+          <h1 className={styles.title}>
+            <span className={`mono ${styles.id}`}>{regra.id}</span>
+            {regra.titulo}
+          </h1>
           <div className={styles.meta}>
-            <StatusChip status={regra.status} texto={rotuloChip} />
+            <StatusChip status={regra.status} texto={falhando ? rotuloStatus('falhando', STACK_LABEL[falhando.stack]) : rotuloStatus(regra.status)} />
+            {telaTexto ? <span className={styles.tela}>Tela: {telaTexto}</span> : null}
             {regra.tags.map((t) => (
               <Tag key={t}>{t.startsWith('@') ? t : `@${t}`}</Tag>
             ))}
-            {ultimaAlteracao ? (
-              <span className={styles.metaText}>
-                {regra.funcionalidade?.nome ?? ''} · alterada {tempoRelativo(ultimaAlteracao.data)} em{' '}
-                <span className="mono">{ultimaAlteracao.commit}</span>
-              </span>
-            ) : null}
           </div>
+          {regra.avisos.length > 0 ? (
+            <div className={styles.avisos}>
+              {regra.avisos.map((a) => (
+                <span key={a}>{a}</span>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className={styles.actions}>
           <Button variant="outline" icon={<Link2 size={16} strokeWidth={1.5} />} onClick={copiarLink}>
             Copiar link
           </Button>
           <ButtonLink
-            to={rotas.apresentacao(projeto, funcionalidadeKey ?? '', regra.id)}
+            to={rotas.apresentacao(projeto, funcionalidadeKey, regra.id)}
             variant="primary"
             icon={<Presentation size={16} strokeWidth={1.5} />}
           >
@@ -105,75 +107,61 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
       </div>
 
       <div className={styles.body}>
-        <div className={styles.main}>
-          <section className={styles.card} aria-label="Em linguagem de negócio">
-            <span className={styles.eyebrow}>Em linguagem de negócio</span>
-            <p className={styles.business}>
-              {regra.descricao || [regra.situacao, regra.resultado].filter(Boolean).join(' ') || 'Esta regra não tem descrição no arquivo de origem.'}
-            </p>
-            {regra.funcionalidade ? (
-              <span className={styles.source}>
-                Extraído da descrição da funcionalidade em <span className="mono">{principal?.arquivo ?? ''}</span>
-              </span>
-            ) : null}
-            {regra.avisos.map((a) => (
-              <span key={a} className={styles.warn}>
-                {a}
-              </span>
-            ))}
-          </section>
-
-          <section className={styles.scenarios} aria-labelledby="cenarios-titulo">
-            <div className={styles.scenarioHead}>
-              <h2 id="cenarios-titulo" className={styles.sectionTitle}>
-                Cenários <span className={`mono ${styles.count}`}>{cenarios.length}</span>
-              </h2>
-              <SegmentedControl<Modo>
-                ariaLabel="Formato dos cenários"
-                value={modo}
-                onChange={setModo}
-                options={[
-                  { value: 'gherkin', label: 'Gherkin' },
-                  { value: 'texto', label: 'Texto simples' },
-                ]}
-              />
-            </div>
-            {cenarios.slice(0, visiveis).map((c) => (
-              <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
-            ))}
-            {cenarios.length > visiveis ? (
-              <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
-                Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
-              </button>
-            ) : null}
-          </section>
-        </div>
+        <section className={styles.cenarios} aria-labelledby="cenarios-titulo">
+          <div className={styles.scenarioHead}>
+            <h2 id="cenarios-titulo" className={styles.sectionTitle}>
+              {plural(cenarios.length, 'cenário', 'cenários')}
+              {principal ? <span className={styles.stackTag}>{STACK_LABEL[principal.stack]}</span> : null}
+            </h2>
+            <SegmentedControl<Modo>
+              ariaLabel="Formato dos cenários"
+              value={modo}
+              onChange={setModo}
+              options={[
+                { value: 'gherkin', label: 'Gherkin' },
+                { value: 'texto', label: 'Texto simples' },
+              ]}
+            />
+          </div>
+          {cenarios.slice(0, visiveis).map((c) => (
+            <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
+          ))}
+          {cenarios.length > visiveis ? (
+            <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
+              Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
+            </button>
+          ) : null}
+        </section>
 
         <aside className={styles.side} aria-label="Onde a regra está">
-          <TelasPanel telas={regra.telas} componentes={regra.componentes} />
-          <section className={styles.sideSection}>
-            <h2 className={styles.sectionTitle}>Onde a regra está</h2>
-            {regra.implementacoes.map((i) => (
-              <ImplementationCard key={i.stack} impl={i} />
-            ))}
-            {regra.ausentes.map((a) => (
-              <div key={a.stack} className={styles.missing}>
-                <p className={styles.missingText}>
-                  Nenhum cenário com esta regra na stack <strong>{a.rotulo}</strong>.
-                </p>
-                <Button variant="outline" icon={<Copy size={14} strokeWidth={1.5} />} onClick={() => copiarGherkin(principal?.stack ?? a.stack)}>
-                  Copiar Gherkin
-                </Button>
-              </div>
-            ))}
-          </section>
-
-          <section className={styles.sideSection}>
-            <span className={styles.eyebrow}>Últimas 14 execuções</span>
-            {regra.historico.map((h) => (
-              <RunHistoryStrip key={h.stack} rotulo={h.rotulo} execucoes={h.execucoes} />
-            ))}
-          </section>
+          <h2 className={styles.sideTitle}>Stacks</h2>
+          {regra.implementacoes.map((i) => {
+            const hist = regra.historico.find((h) => h.stack === i.stack)?.execucoes;
+            return (
+              <StackRow
+                key={i.stack}
+                stack={i.stack}
+                rotulo={i.rotulo}
+                status={i.status}
+                localizacao={`${i.arquivo}:${i.linha}`}
+                historico={hist}
+              />
+            );
+          })}
+          {regra.ausentes.map((a) => (
+            <StackRow
+              key={a.stack}
+              stack={a.stack}
+              rotulo={a.rotulo}
+              status="sem-cobertura"
+              onCopy={() => copiarGherkin(principal?.stack ?? a.stack)}
+            />
+          ))}
+          {regra.ausentes.length > 0 ? (
+            <p className={styles.hint}>
+              <Copy size={12} strokeWidth={1.5} aria-hidden="true" /> Copia o Gherkin desta regra para levar à stack sem cobertura.
+            </p>
+          ) : null}
         </aside>
       </div>
     </>

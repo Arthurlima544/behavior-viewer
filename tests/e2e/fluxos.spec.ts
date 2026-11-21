@@ -77,7 +77,7 @@ test.describe('detalhe da regra (RF-33 a RF-39)', () => {
     const onde = page.getByRole('complementary', { name: 'Onde a regra está' });
     await expect(onde).toContainText('TypeScript');
     await expect(onde).toContainText('Java');
-    await expect(onde).toContainText('Nenhum cenário com esta regra na stack Flutter');
+    await expect(onde).toContainText('sem cobertura nesta stack');
     await expect(page.getByRole('button', { name: 'Copiar Gherkin' })).toBeVisible();
     await expect(page.getByRole('list', { name: 'Execuções em Java' }).locator('li')).toHaveCount(14);
   });

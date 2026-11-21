@@ -2,20 +2,15 @@ import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useFuncionalidades, useProjetos, useRegra, useRegras } from '../api/queries';
-import type { RuleDetail, Stack } from '../api/types';
+import type { RuleDetail } from '../api/types';
 import { ErrorState, Loading, EmptyState } from '../components/States';
+import { ScenarioCard } from '../components/ScenarioCard';
+import { STACK_LABEL } from '../lib/format';
+import { principalDe } from '../lib/rule';
 import { rotas } from '../lib/paths';
 import styles from './PresentationPage.module.css';
 
-const ORDEM: Stack[] = ['flutter', 'typescript', 'java', 'gherkin-generico'];
-const NOME_CAMADA: Partial<Record<Stack, { label: string; sub: string }>> = {
-  flutter: { label: 'App', sub: 'Flutter' },
-  typescript: { label: 'Web', sub: 'TypeScript' },
-  java: { label: 'API', sub: 'Java' },
-  'gherkin-generico': { label: 'Gherkin', sub: 'genérico' },
-};
-
-/** Modo apresentação: uma regra por tela, com navegação por botões e teclado (RF-42 a RF-46). */
+/** Modo apresentação: um slide por regra, com os cenários e as capturas ao lado dos passos (RF-42 a RF-46). */
 export function PresentationPage() {
   const { projetoId = '', funcionalidade = '' } = useParams();
   const [params, setParams] = useSearchParams();
@@ -111,7 +106,7 @@ export function PresentationPage() {
       <main className={styles.main}>
         {detalhe.isError ? <ErrorState mensagem={(detalhe.error as Error).message} /> : null}
         {!detalhe.data && !detalhe.isError ? <Loading /> : null}
-        {detalhe.data ? <Slide regra={detalhe.data} numero={numero} porqueFallback={feature.descricao} /> : null}
+        {detalhe.data ? <Slide regra={detalhe.data} numero={numero} /> : null}
       </main>
 
       <footer className={styles.footer}>
@@ -140,90 +135,25 @@ export function PresentationPage() {
   );
 }
 
-function Slide({ regra, numero, porqueFallback }: { regra: RuleDetail; numero: string; porqueFallback: string }) {
-  const camadas = camadasDe(regra);
-  const captura = regra.implementacoes.flatMap((i) => i.cenarios.flatMap((c) => c.capturas))[0];
-  const porque = regra.descricao || porqueFallback;
+function Slide({ regra, numero }: { regra: RuleDetail; numero: string }) {
+  const principal = principalDe(regra);
+  const telaTexto = regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ');
   return (
     <section className={styles.slide} aria-label={`Regra ${numero}`}>
       <div className={styles.titleBox}>
         <span className={`mono ${styles.label}`}>
           REGRA {numero} · {regra.id}
+          {principal ? <span className={styles.stack}> · {STACK_LABEL[principal.stack]}</span> : null}
         </span>
-        {regra.telas.length > 0 ? (
-          <span className={styles.tela}>
-            Tela: {regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ')}
-          </span>
-        ) : null}
         <h1 className={styles.title}>{regra.titulo}</h1>
-        {porque ? <p className={styles.why}>{porque}</p> : null}
+        {telaTexto ? <p className={styles.tela}>Tela: {telaTexto}</p> : null}
       </div>
 
-      {regra.situacao || regra.resultado ? (
-        <div className={styles.cards}>
-          {regra.situacao ? (
-            <div className={styles.cardDark}>
-              <span className={styles.cardLabel}>Situação</span>
-              <p className={styles.cardText}>{regra.situacao}</p>
-            </div>
-          ) : null}
-          {regra.resultado ? (
-            <div className={styles.cardLight}>
-              <span className={styles.cardLabelLight}>Resultado esperado</span>
-              <p className={styles.cardTextLight}>{regra.resultado}</p>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-
-      {captura ? (
-        <figure className={styles.figure}>
-          <img src={captura.url} alt={`Tela durante o passo: ${captura.passo}`} className={styles.figImg} />
-          <figcaption className={styles.figCaption}>{captura.passo}</figcaption>
-        </figure>
-      ) : null}
-
-      <div className={styles.garantia}>
-        <span className={styles.garantiaLabel}>Garantida por testes em</span>
-        {camadas.map((c) => (
-          <span key={c.stack} className={`${styles.pill} ${styles[c.estado]}`}>
-            <span className={styles.pillLabel}>{c.label}</span>
-            <span className={styles.pillSub}>{c.sub}</span>
-          </span>
+      <div className={styles.cenarios}>
+        {(principal?.cenarios ?? []).map((c) => (
+          <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo="gherkin" escala="grande" />
         ))}
       </div>
     </section>
   );
-}
-
-function camadasDe(regra: RuleDetail) {
-  const itens = [
-    ...regra.implementacoes.map((i) => ({
-      stack: i.stack,
-      estado: estadoDe(i.status),
-      sub: subDe(i.status, i.stack),
-    })),
-    ...regra.ausentes.map((a) => ({ stack: a.stack, estado: 'semTeste' as const, sub: 'sem teste' })),
-  ];
-  return itens
-    .sort((a, b) => ORDEM.indexOf(a.stack) - ORDEM.indexOf(b.stack))
-    .map((i) => ({
-      stack: i.stack,
-      label: NOME_CAMADA[i.stack]?.label ?? i.stack,
-      sub: i.sub,
-      estado: i.estado,
-    }));
-}
-
-function estadoDe(status: RuleDetail['status']): 'ok' | 'corrigindo' | 'semTeste' {
-  if (status === 'falhando') return 'corrigindo';
-  if (status === 'sem-cobertura') return 'semTeste';
-  return 'ok';
-}
-
-function subDe(status: RuleDetail['status'], stack: Stack): string {
-  if (status === 'falhando') return 'em correção';
-  if (status === 'pendente') return 'pendente';
-  if (status === 'sem-execucao') return 'sem execução';
-  return NOME_CAMADA[stack]?.sub ?? stack;
 }
