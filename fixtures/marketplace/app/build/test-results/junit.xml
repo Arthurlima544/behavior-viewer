@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="Checkout" tests="4" failures="0" errors="0" skipped="1">
+    <testcase classname="Checkout" name="Finish without a valid address" time="0.4"/>
+    <testcase classname="Checkout" name="Order above the limit" time="0.3"/>
+    <testcase classname="Checkout" name="Reservation when payment starts" time="0.5"/>
+    <testcase classname="Checkout" name="Limit exceeded" time="0.2"><skipped/></testcase>
+  </testsuite>
+  <testsuite name="Cupons de desconto" tests="3" failures="1" errors="0" skipped="0">
+    <testcase classname="Cupons de desconto" name="Expired coupon" time="0.2"/>
+    <testcase classname="Cupons de desconto" name="CPF already bought" time="0.4">
+      <failure message="coupon accepted">expected refusal</failure>
+    </testcase>
+    <testcase classname="Cupons de desconto" name="50% limit" time="0.2"/>
+  </testsuite>
+</testsuites>

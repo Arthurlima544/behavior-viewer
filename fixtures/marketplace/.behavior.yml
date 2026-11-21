@@ -1,0 +1,17 @@
+# Fixture: projeto com três stacks declaradas (RF-03, RF-05).
+nome: Marketplace
+stacks:
+  - id: flutter
+    caminho: app
+    relatorios:
+      - build/test-results/*.xml
+  - id: typescript
+    caminho: web
+    relatorios:
+      - reports/cucumber.json
+  - id: java
+    caminho: api
+    relatorios:
+      - target/cucumber.json
+ignorar:
+  - "**/rascunhos/**"

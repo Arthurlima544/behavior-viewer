@@ -1,0 +1,32 @@
+[
+  {
+    "uri": "src/test/resources/features/checkout.feature",
+    "id": "checkout",
+    "keyword": "Feature",
+    "name": "Checkout",
+    "elements": [
+      { "id": "c1", "type": "scenario", "keyword": "Scenario", "name": "Finish without a valid address",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "c2", "type": "scenario", "keyword": "Scenario", "name": "Order above the limit",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "c3", "type": "scenario", "keyword": "Scenario", "name": "Reservation when payment starts",
+        "steps": [{ "keyword": "Given ", "result": { "status": "undefined" } }, { "keyword": "When ", "result": { "status": "skipped" } }] },
+      { "id": "c4", "type": "scenario", "keyword": "Scenario", "name": "Limit exceeded",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] }
+    ]
+  },
+  {
+    "uri": "src/test/resources/features/cupons.feature",
+    "id": "cupons",
+    "keyword": "Feature",
+    "name": "Cupons de desconto",
+    "elements": [
+      { "id": "u1", "type": "scenario", "keyword": "Scenario", "name": "Expired coupon",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "u2", "type": "scenario", "keyword": "Scenario", "name": "Product on promotion with coupon applied",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "u3", "type": "scenario", "keyword": "Scenario", "name": "CPF already bought",
+        "steps": [{ "keyword": "Given ", "result": { "status": "passed", "duration": 1000 } }] }
+    ]
+  }
+]

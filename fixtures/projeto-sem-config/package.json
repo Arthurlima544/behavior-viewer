@@ -1,0 +1,7 @@
+{
+  "name": "pagamentos",
+  "private": true,
+  "devDependencies": {
+    "@cucumber/cucumber": "^11.0.0"
+  }
+}

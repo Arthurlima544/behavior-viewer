@@ -1,0 +1,46 @@
+[
+  {
+    "uri": "features/cupons.feature",
+    "id": "cupons",
+    "keyword": "Funcionalidade",
+    "name": "Cupons de desconto",
+    "elements": [
+      { "id": "w1", "type": "scenario", "keyword": "Cenário", "name": "Cupom expirado",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "w2", "type": "scenario", "keyword": "Cenário", "name": "Produto em promoção com cupom aplicado",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "w3", "type": "scenario", "keyword": "Cenário", "name": "Carrinho misto aplica o cupom só nos itens sem promoção",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }, { "keyword": "Então ", "result": { "status": "failed", "error_message": "esperado R$ 179,10, recebido R$ 161,19", "duration": 900 } }] },
+      { "id": "w4", "type": "scenario", "keyword": "Cenário", "name": "CPF já comprou",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "w5", "type": "scenario", "keyword": "Cenário", "name": "Limite de 50%",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] }
+    ]
+  },
+  {
+    "uri": "features/checkout.feature",
+    "id": "checkout",
+    "keyword": "Funcionalidade",
+    "name": "Checkout",
+    "elements": [
+      { "id": "k1", "type": "scenario", "keyword": "Cenário", "name": "Finalizar sem endereço válido",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "k2", "type": "scenario", "keyword": "Cenário", "name": "Pedido acima do limite",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "k3", "type": "scenario", "keyword": "Cenário", "name": "Reserva ao iniciar pagamento",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] },
+      { "id": "k4", "type": "scenario", "keyword": "Cenário", "name": "Limite excedido",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] }
+    ]
+  },
+  {
+    "uri": "features/avaliacoes.feature",
+    "id": "avaliacoes",
+    "keyword": "Funcionalidade",
+    "name": "Avaliações",
+    "elements": [
+      { "id": "a1", "type": "scenario", "keyword": "Cenário", "name": "Avaliar produto comprado",
+        "steps": [{ "keyword": "Dado ", "result": { "status": "passed", "duration": 1000 } }] }
+    ]
+  }
+]
