@@ -64,6 +64,10 @@ function resumoProjeto(p: ProjetoModel, selection: Map<string, boolean>) {
   return {
     id: p.id,
     atualizacoes: p.atualizacoes,
+    novidades: {
+      novas: p.regras.filter((r) => r.marcacao === 'novo').length,
+      alteradas: p.regras.filter((r) => r.marcacao === 'alterado').length,
+    },
     nome: p.nome,
     descricao: p.descricao,
     caminho: p.caminho,
@@ -283,6 +287,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       arquivos: p.arquivosHash,
       contadores: { regras: p.contadores.regras, cenarios: p.contadores.cenarios },
       vistoEm: new Date().toISOString(),
+      mapas: p.mapas,
     });
     await deps.state.refresh();
     const atual = deps.state.snapshot?.projetos.find((x) => x.id === p.id);
@@ -391,10 +396,15 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       tag?: string;
       divergentes?: string;
       funcionalidade?: string;
+      /** novo | alterado | mudancas (novas ou alteradas desde a última visualização) */
+      marcacao?: string;
     };
   }>(`${api}/projetos/:id/regras`, async (req) => {
     const p = projectOrFail(snapshotOrFail(), req.params.id);
-    const { q, stack, status, tag, divergentes, funcionalidade } = req.query;
+    const { q, stack, status, tag, divergentes, funcionalidade, marcacao } = req.query;
+    if (marcacao && !['novo', 'alterado', 'mudancas'].includes(marcacao)) {
+      throw new ApiError(400, 'filtro-invalido', `marcação desconhecida: ${marcacao}`);
+    }
 
     if (stack && !(STACKS as readonly string[]).includes(stack)) {
       throw new ApiError(400, 'filtro-invalido', `stack desconhecida: ${stack}`);
@@ -407,6 +417,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     const divergentIds = new Set(p.divergencias.map((d) => d.regraId));
     const items = p.regras
       .filter((r) => !funcionalidade || r.funcionalidadeKey === funcionalidade)
+      .filter((r) => !marcacao || (marcacao === 'mudancas' ? r.marcacao !== null : r.marcacao === marcacao))
       .filter((r) => !stack || r.implementacoes.some((i) => i.stack === stack))
       .filter((r) => !status || statusNaStack(r, stack) === status)
       .filter((r) => !tag || r.tags.includes(tag))
@@ -667,6 +678,7 @@ function resumoRegra(r: RegraModel, p: ProjetoModel) {
     cenarios: r.cenariosCount,
     avisos: r.avisos,
     divergente,
+    marcacao: r.marcacao,
     presenca: p.stacks.map((s) => ({
       stack: s.id,
       rotulo: STACK_LABEL[s.id],

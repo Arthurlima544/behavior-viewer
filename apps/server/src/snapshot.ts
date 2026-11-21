@@ -2,6 +2,7 @@ import { promises as fs } from 'node:fs';
 import { basename, join, relative, sep } from 'node:path';
 import {
   aggregateStatus,
+  normalizeTitle,
   buildCoverageMatrix,
   findDivergences,
   shortHash,
@@ -31,7 +32,7 @@ import {
   type RegraParsed,
 } from './parser/feature.js';
 import { readGitRef } from './git.js';
-import { calcularAtualizacoes, sha256 } from './atualizacoes.js';
+import { calcularAtualizacoes, sha256, type MapasDeBase } from './atualizacoes.js';
 import { CONFIG_FILE } from './scanner/projectConfig.js';
 import { readText } from './util/fs.js';
 import type {
@@ -300,6 +301,9 @@ async function buildProject(
         passos: c.passos.map((p) => ({ palavra: p.palavra, texto: p.texto })),
         exemplos: c.exemplos,
         resultado: reports ? reports.index.lookup(f.parsed.nome, c.nome) : 'sem-execucao',
+        chave: `${f.stack}|${slugify(f.parsed.nome)}|${normalizeTitle(c.nome)}`,
+        assinatura: sha256(JSON.stringify({ nome: c.nome, passos: c.passos, exemplos: c.exemplos })),
+        marcacao: null,
         telas: c.telas,
         componentes: c.componentes,
         capturas: capturasDoCenario(indice.entradas, f.parsed.nome, c.nome),
@@ -357,7 +361,15 @@ async function buildProject(
       avisos.push('consolidada pelo título (sem ID em todas as stacks)');
     const tags = [...new Set([...first.funcionalidadeTags, ...group.flatMap((d) => d.regra.tags)])];
 
+    const assinaturaRegra = sha256(
+      JSON.stringify({
+        titulo: first.regra.titulo,
+        impls: group.map((d) => ({ stack: d.stack, cenarios: d.cenarios.map((c) => c.assinatura) })),
+      }),
+    );
     regras.push({
+      assinatura: assinaturaRegra,
+      marcacao: null,
       id,
       origem,
       titulo: first.regra.titulo,
@@ -457,6 +469,7 @@ async function buildProject(
     regras,
     arquivosHash: acc.arquivos,
     atualizacoes: calcularAtualizacoes({ arquivos: acc.arquivos, contadores: { regras: regras.length, cenarios } }, null),
+    mapas: mapasDe(regras),
     matriz,
     divergencias,
     avisos: regras.filter((r) => r.avisos.length > 0).length,
@@ -509,4 +522,16 @@ function normalizeKey(titulo: string): string {
 const RANK: Record<Stack, number> = { flutter: 0, typescript: 1, java: 2, 'gherkin-generico': 3 };
 function stackRank(stack: Stack): number {
   return RANK[stack];
+}
+
+/** Hash por regra e por cenário da pasta atual (base da marcação de novo/alterado). */
+export function mapasDe(regras: RegraModel[]): MapasDeBase {
+  const mapas: MapasDeBase = { regras: {}, cenarios: {} };
+  for (const r of regras) {
+    mapas.regras[r.id] = r.assinatura;
+    for (const i of r.implementacoes) {
+      for (const c of i.cenarios) mapas.cenarios[c.chave] = c.assinatura;
+    }
+  }
+  return mapas;
 }

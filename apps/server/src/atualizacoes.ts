@@ -18,6 +18,8 @@ export interface LinhaDeBase {
   arquivos: Record<string, string>;
   contadores: { regras: number; cenarios: number };
   vistoEm: string;
+  /** Hash por regra e por cenário. Ausente em linhas de base antigas (sem marcação até a próxima visualização). */
+  mapas?: MapasDeBase;
 }
 
 export interface AtualizacoesModel {
@@ -75,4 +77,35 @@ export function calcularAtualizacoes(
     agora: atual.contadores,
     vistoEm: base.vistoEm,
   };
+}
+
+/** Marcação de um item desde a última vez que o usuário viu o projeto. */
+export type Marcacao = 'novo' | 'alterado';
+
+/** Mapas da linha de base para regras e cenários: id ou chave → hash do conteúdo. */
+export interface MapasDeBase {
+  regras: Record<string, string>;
+  cenarios: Record<string, string>;
+}
+
+/**
+ * Classifica regras e cenários atuais comparando com a linha de base. Sem mapas na linha de base
+ * (versões antigas) não há marcação: a primeira varredura só a registra.
+ */
+export function marcacoesDe(
+  atual: MapasDeBase,
+  base: { mapas?: MapasDeBase } | null,
+): { regras: Record<string, Marcacao>; cenarios: Record<string, Marcacao> } {
+  const regras: Record<string, Marcacao> = {};
+  const cenarios: Record<string, Marcacao> = {};
+  if (!base?.mapas) return { regras, cenarios };
+  for (const [id, hash] of Object.entries(atual.regras)) {
+    if (!(id in base.mapas.regras)) regras[id] = 'novo';
+    else if (base.mapas.regras[id] !== hash) regras[id] = 'alterado';
+  }
+  for (const [chave, hash] of Object.entries(atual.cenarios)) {
+    if (!(chave in base.mapas.cenarios)) cenarios[chave] = 'novo';
+    else if (base.mapas.cenarios[chave] !== hash) cenarios[chave] = 'alterado';
+  }
+  return { regras, cenarios };
 }

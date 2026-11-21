@@ -1,6 +1,7 @@
 import type { Cenario } from '../api/types';
 import { ehPalavraChave, RESULT_LABEL, TIPO_LABEL } from '../lib/format';
 import { StatusDot } from './StatusDot';
+import { MarcacaoChip } from './MarcacaoChip';
 import styles from './ScenarioCard.module.css';
 
 interface Props {
@@ -22,6 +23,7 @@ export function ScenarioCard({ cenario, modo }: Props) {
             <span className="sr-only">{TIPO_LABEL[cenario.tipo]}: </span>
             {cenario.nome}
           </span>
+          <MarcacaoChip marcacao={cenario.marcacao} />
           <span className={styles.result}>
             <StatusDot status={cenario.resultado} />
             {RESULT_LABEL[cenario.resultado]}

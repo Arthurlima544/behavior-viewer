@@ -4,6 +4,7 @@ import type { RuleSummary, Stack } from '../api/types';
 import { StatusDot } from './StatusDot';
 import { StackBadge } from './StackBadge';
 import { Tag } from './Tag';
+import { MarcacaoChip } from './MarcacaoChip';
 import { plural, STATUS_LABEL } from '../lib/format';
 import { rotas } from '../lib/paths';
 import styles from './RuleRow.module.css';
@@ -23,6 +24,7 @@ export function RuleRow({ projetoId, regra, stacks }: Props) {
         <StatusDot status={regra.status} />
       </span>
       <span className={`mono ${styles.id}`}>{regra.id}</span>
+      <MarcacaoChip marcacao={regra.marcacao} />
       <span className={styles.main}>
         <span className={styles.title}>{regra.titulo}</span>
         <span className={styles.tags}>

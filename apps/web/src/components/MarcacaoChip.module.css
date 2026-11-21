@@ -1,0 +1,22 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: var(--radius-xs);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  flex: none;
+}
+
+.novo {
+  background: var(--text);
+  color: var(--on-primary);
+}
+
+.alterado {
+  border: 1px solid var(--text-2);
+  color: var(--text-2);
+}

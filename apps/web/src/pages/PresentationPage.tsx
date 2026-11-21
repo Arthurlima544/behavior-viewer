@@ -7,6 +7,7 @@ import { keys, useFuncionalidades, useProjetos, useRegras } from '../api/queries
 import type { Cenario, RuleDetail, Stack } from '../api/types';
 import { EmptyState, ErrorState, Loading } from '../components/States';
 import { STACK_LABEL, ehPalavraChave } from '../lib/format';
+import { MarcacaoChip } from '../components/MarcacaoChip';
 import { principalDe } from '../lib/rule';
 import { APRESENTAR_TUDO, rotas } from '../lib/paths';
 import styles from './PresentationPage.module.css';
@@ -43,13 +44,18 @@ export function PresentationPage() {
     })),
   });
   const prontos = detalhes.every((d) => d.data !== undefined);
-  const slides: Slide[] = prontos
+  const todos: Slide[] = prontos
     ? detalhes.flatMap((d) => {
         const regra = d.data as RuleDetail;
         const principal = principalDe(regra);
         return (principal?.cenarios ?? []).map((cenario) => ({ regra, cenario, stack: principal!.stack }));
       })
     : [];
+  // Filtro de novidades (?marcacao=novo | alterado | mudancas): só os cenários novos ou alterados.
+  const marcacao = params.get('marcacao') ?? '';
+  const slides = marcacao
+    ? todos.filter((s) => (marcacao === 'mudancas' ? s.cenario.marcacao !== null : s.cenario.marcacao === marcacao))
+    : todos;
   const total = slides.length;
 
   // Posição: ?regra=ID leva ao primeiro cenário da regra; ?i=N leva ao N-ésimo slide (começando em 1).
@@ -67,7 +73,11 @@ export function PresentationPage() {
   function irPara(i: number) {
     if (total === 0) return;
     const alvo = Math.min(Math.max(i, 0), total - 1);
-    setParams({ i: String(alvo + 1) }, { replace: true });
+    // Mantém os demais parâmetros (como o filtro de novidades) e só troca a posição.
+    const next = new URLSearchParams(params);
+    next.delete('regra');
+    next.set('i', String(alvo + 1));
+    setParams(next, { replace: true });
   }
 
   useEffect(() => {
@@ -98,7 +108,7 @@ export function PresentationPage() {
   if (total === 0 || !atual) {
     return (
       <div className={styles.center}>
-        <EmptyState title="Esta funcionalidade não tem cenários para apresentar.">
+        <EmptyState title={marcacao ? 'Nenhuma novidade nesta seleção.' : 'Esta funcionalidade não tem cenários para apresentar.'}>
           <Link to={rotas.catalogo(projetoId)}>Voltar ao catálogo</Link>
         </EmptyState>
       </div>
@@ -152,6 +162,7 @@ export function PresentationPage() {
             </div>
             <article className={styles.cartao}>
               <h1 className={styles.cenarioNome}>{atual.cenario.nome}</h1>
+              <MarcacaoChip marcacao={atual.cenario.marcacao} />
               <div className={styles.passos}>
                 {atual.cenario.passos.map((p, i) => (
                   <div key={i} className={styles.passo}>

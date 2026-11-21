@@ -25,6 +25,7 @@ export interface Atualizacoes {
 export interface ProjectSummary {
   id: string;
   atualizacoes: Atualizacoes;
+  novidades: { novas: number; alteradas: number };
   nome: string;
   descricao: string;
   caminho: string;
@@ -48,6 +49,7 @@ export interface PresencaStack {
 
 export interface RuleSummary {
   id: string;
+  marcacao: Marcacao;
   origem: string;
   titulo: string;
   tags: string[];
@@ -90,7 +92,11 @@ export interface TelaDeclarada {
   regras: number;
 }
 
+export type Marcacao = 'novo' | 'alterado' | null;
+
 export interface Cenario {
+  chave: string;
+  marcacao: Marcacao;
   nome: string;
   linha: number;
   tipo: 'cenario' | 'esquema';

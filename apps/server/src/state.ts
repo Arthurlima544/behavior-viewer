@@ -4,7 +4,7 @@ import type { Snapshot } from './model.js';
 import type { Store } from './store.js';
 
 import type { Logger } from 'pino';
-import { calcularAtualizacoes } from './atualizacoes.js';
+import { calcularAtualizacoes, marcacoesDe } from './atualizacoes.js';
 
 export type { Logger };
 
@@ -49,10 +49,23 @@ export class AppState {
       const contadores = { regras: p.contadores.regras, cenarios: p.contadores.cenarios };
       let base = this.store.getBaseline(p.id);
       if (!base) {
-        base = { arquivos: p.arquivosHash, contadores, vistoEm: new Date().toISOString() };
+        base = { arquivos: p.arquivosHash, contadores, vistoEm: new Date().toISOString(), mapas: p.mapas };
         this.store.setBaseline(p.id, base);
       }
       p.atualizacoes = calcularAtualizacoes({ arquivos: p.arquivosHash, contadores }, base);
+      // Linha de base antiga, sem mapas: completa só se a pasta não mudou, para não marcar tudo como novo.
+      if (!base.mapas && !p.atualizacoes.pendentes) {
+        base = { ...base, mapas: p.mapas };
+        this.store.setBaseline(p.id, base);
+      }
+      // Marcação de novo/alterado por regra e por cenário, desde a última vez que o usuário viu.
+      const marcas = marcacoesDe(p.mapas, base);
+      for (const r of p.regras) {
+        r.marcacao = marcas.regras[r.id] ?? null;
+        for (const i of r.implementacoes) {
+          for (const c of i.cenarios) c.marcacao = marcas.cenarios[c.chave] ?? null;
+        }
+      }
     }
     for (const stamp of reportStamps) this.recordHistory(stamp);
     this.current = snapshot;

@@ -5,7 +5,7 @@ import type {
   Stack,
   StatusCounts,
 } from '@behavior-viewer/domain';
-import type { AtualizacoesModel } from './atualizacoes.js';
+import type { AtualizacoesModel, MapasDeBase } from './atualizacoes.js';
 
 export interface Passo {
   palavra: string;
@@ -47,6 +47,12 @@ export interface TelaDeclarada {
 }
 
 export interface CenarioModel {
+  /** Chave estável: stack | funcionalidade | nome do cenário. */
+  chave: string;
+  /** Hash SHA-256 do conteúdo do cenário (nome, passos e exemplos). */
+  assinatura: string;
+  /** Novo ou alterado desde a última vez que o usuário viu o projeto. Null quando não mudou. */
+  marcacao: 'novo' | 'alterado' | null;
   nome: string;
   linha: number;
   tipo: 'cenario' | 'esquema';
@@ -71,6 +77,10 @@ export interface ImplementacaoModel {
 }
 
 export interface RegraModel {
+  /** Hash SHA-256 da regra (título e todos os cenários de todas as stacks). */
+  assinatura: string;
+  /** Novo ou alterado desde a última vez que o usuário viu o projeto. Null quando não mudou. */
+  marcacao: 'novo' | 'alterado' | null;
   id: string;
   origem: RuleOrigin;
   titulo: string;
@@ -140,6 +150,8 @@ export interface ErroModel {
 
 export interface ProjetoModel {
   id: string;
+  /** Hash por regra e por cenário da pasta atual, para comparar com a linha de base. */
+  mapas: MapasDeBase;
   /** Hash SHA-256 de cada arquivo da pasta de testes (.feature e .behavior.yml), por caminho relativo. */
   arquivosHash: Record<string, string>;
   /** Atualizações da pasta desde a última vez que o usuário marcou o projeto como visto. */

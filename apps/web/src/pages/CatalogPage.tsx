@@ -26,6 +26,7 @@ export function CatalogPage() {
   const status = params.get('status') ?? '';
   const divergentes = params.get('divergentes') === 'true';
   const funcionalidade = params.get('funcionalidade') ?? '';
+  const marcacao = params.get('marcacao') ?? '';
 
   const funcs = useFuncionalidades(projetoId);
   const regras = useRegras(projetoId, {
@@ -33,6 +34,7 @@ export function CatalogPage() {
     stack: stack || undefined,
     status: status || undefined,
     divergentes: divergentes ? 'true' : undefined,
+    marcacao: marcacao || undefined,
     funcionalidade: funcionalidade || undefined,
   });
 
@@ -59,11 +61,12 @@ export function CatalogPage() {
 
   const stacksDoProjeto = projeto.stacks.map((s) => s.id);
   const nomeFuncionalidade = funcs.data.find((f) => f.key === funcionalidade)?.nome ?? funcionalidade;
-  const apresentarTo = funcionalidade
+  const apresentarBase = funcionalidade
     ? rotas.apresentacao(projeto.id, funcionalidade)
     : rotas.apresentacao(projeto.id, APRESENTAR_TUDO);
+  const apresentarTo = marcacao ? `${apresentarBase}${apresentarBase.includes('?') ? '&' : '?'}marcacao=${marcacao}` : apresentarBase;
   const apresentarLabel = funcionalidade ? `Apresentar "${nomeFuncionalidade}"` : 'Apresentar tudo';
-  const filtrosAtivos = Boolean(q || stack || status || divergentes || funcionalidade);
+  const filtrosAtivos = Boolean(q || stack || status || divergentes || funcionalidade || marcacao);
 
   return (
     <>
@@ -77,6 +80,20 @@ export function CatalogPage() {
             {plural(projeto.contadores.regras, 'regra', 'regras')} em {plural(projeto.contadores.funcionalidades, 'funcionalidade', 'funcionalidades')} ·{' '}
             {stacksDoProjeto.map((s) => STACK_LABEL[s]).join(', ')}
           </p>
+          {projeto.novidades.novas + projeto.novidades.alteradas > 0 ? (
+            <div className={styles.novidades} role="group" aria-label="Novidades desde a última visualização">
+              {projeto.novidades.novas > 0 ? (
+                <Button variant="outline" aria-pressed={marcacao === 'novo'} className={marcacao === 'novo' ? styles.pressed : ''} onClick={() => atualizar({ marcacao: marcacao === 'novo' ? undefined : 'novo' })}>
+                  {projeto.novidades.novas} {projeto.novidades.novas === 1 ? 'nova' : 'novas'}
+                </Button>
+              ) : null}
+              {projeto.novidades.alteradas > 0 ? (
+                <Button variant="outline" aria-pressed={marcacao === 'alterado'} className={marcacao === 'alterado' ? styles.pressed : ''} onClick={() => atualizar({ marcacao: marcacao === 'alterado' ? undefined : 'alterado' })}>
+                  {projeto.novidades.alteradas} {projeto.novidades.alteradas === 1 ? 'alterada' : 'alteradas'}
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
         <ButtonLink to={apresentarTo} variant="primary">
           {apresentarLabel}
@@ -124,6 +141,15 @@ export function CatalogPage() {
         <Button variant="outline" aria-pressed={divergentes} className={divergentes ? styles.pressed : ''} onClick={() => atualizar({ divergentes: divergentes ? undefined : 'true' })}>
           Só divergentes
         </Button>
+        <label className={styles.select}>
+          <span className="sr-only">Filtrar por novidades</span>
+          <select value={marcacao} onChange={(e) => atualizar({ marcacao: e.target.value || undefined })} className={styles.selectInput}>
+            <option value="">Novidades: todas</option>
+            <option value="novo">Novas</option>
+            <option value="alterado">Alteradas</option>
+            <option value="mudancas">Novas e alteradas</option>
+          </select>
+        </label>
         {filtrosAtivos ? (
           <Button variant="ghost" onClick={() => setParams(new URLSearchParams(), { replace: true })}>
             Limpar filtros

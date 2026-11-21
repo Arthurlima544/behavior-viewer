@@ -361,3 +361,49 @@ describe('atualizações da pasta de testes (SHA-256)', () => {
     }
   });
 });
+
+describe('novas e alteradas desde a última visualização', () => {
+  it('marca regra nova, regra alterada e cenários, e limpa ao marcar como visto', async () => {
+    const { mkdirSync, writeFileSync, rmSync: rm } = await import('node:fs');
+    const pasta = join(REPO, 'tests', `tmp-marc-${process.pid}-${Date.now()}`);
+    const feature = join(pasta, 'features', 'm.feature');
+    try {
+      mkdirSync(join(pasta, 'features'), { recursive: true });
+      writeFileSync(join(pasta, 'package.json'), JSON.stringify({ devDependencies: { '@cucumber/cucumber': '^11.0.0' } }));
+      writeFileSync(
+        feature,
+        'Feature: Marcação\n  @RN-MRC-001\n  Rule: Regra A\n    Scenario: a\n      Given x\n',
+      );
+      const reg = await app.inject({ method: 'POST', url: '/api/v1/projetos', payload: { caminho: pasta } });
+      const id = reg.json().id;
+      const regras = async (q: string) =>
+        (await app.inject({ method: 'GET', url: `/api/v1/projetos/${id}/regras?${q}` })).json().items.map((r: { id: string }) => r.id);
+
+      // Recém-registrado: nada marcado.
+      expect(await regras('marcacao=mudancas')).toEqual([]);
+
+      writeFileSync(
+        feature,
+        'Feature: Marcação\n  @RN-MRC-001\n  Rule: Regra A\n    Scenario: a\n      Given y\n  @RN-MRC-002\n  Rule: Regra B\n    Scenario: b\n      Given z\n',
+      );
+      await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      expect(await regras('marcacao=novo')).toEqual(['RN-MRC-002']);
+      expect(await regras('marcacao=alterado')).toEqual(['RN-MRC-001']);
+      expect(await regras('marcacao=mudancas')).toEqual(['RN-MRC-001', 'RN-MRC-002']);
+
+      const det = await app.inject({ method: 'GET', url: `/api/v1/regras/RN-MRC-001?projeto=${id}` });
+      expect(det.json().implementacoes[0].cenarios[0].marcacao).toBe('alterado');
+
+      const visto = await app.inject({ method: 'POST', url: `/api/v1/projetos/${id}/visto` });
+      expect(visto.statusCode).toBe(200);
+      expect(await regras('marcacao=mudancas')).toEqual([]);
+
+      const bad = await app.inject({ method: 'GET', url: `/api/v1/projetos/${id}/regras?marcacao=xpto` });
+      expect(bad.statusCode).toBe(400);
+
+      await app.inject({ method: 'DELETE', url: `/api/v1/projetos/${id}` });
+    } finally {
+      rm(pasta, { recursive: true, force: true });
+    }
+  });
+});
