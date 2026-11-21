@@ -31,8 +31,8 @@ export function Sidebar({ recolhido, onToggle }: Props) {
   async function sincronizar() {
     setSyncing(true);
     try {
+      // A API responde só quando a varredura terminou: recarrega os dados logo em seguida.
       await api.varrer();
-      await new Promise((r) => setTimeout(r, 1200));
       await queryClient.invalidateQueries();
     } finally {
       setSyncing(false);

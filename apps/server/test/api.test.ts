@@ -282,3 +282,41 @@ describe('telas e capturas pela API (itens 3 e 4)', () => {
     expect(res.json().telas.map((t: { nome: string }) => t.nome)).toEqual(expect.arrayContaining(['CheckoutPage', 'CupomPage']));
   });
 });
+
+describe('sincronizar (botão Sincronizar)', () => {
+  it('reflete cenários adicionados, alterados e removidos, sem reiniciar', async () => {
+    const { mkdirSync, writeFileSync, rmSync: rm } = await import('node:fs');
+    const pasta = join(REPO, 'tests', `tmp-sync-${process.pid}-${Date.now()}`);
+    const feature = join(pasta, 'features', 'a.feature');
+    try {
+      mkdirSync(join(pasta, 'features'), { recursive: true });
+      writeFileSync(join(pasta, 'package.json'), JSON.stringify({ devDependencies: { '@cucumber/cucumber': '^11.0.0' } }));
+      writeFileSync(feature, 'Feature: Sync\n  Scenario: primeiro\n    Given algo\n');
+      const reg = await app.inject({ method: 'POST', url: '/api/v1/projetos', payload: { caminho: pasta } });
+      expect(reg.statusCode).toBe(201);
+      const id = reg.json().id;
+      const contagem = async () =>
+        (await app.inject({ method: 'GET', url: '/api/v1/projetos' })).json().items.find((p: { id: string }) => p.id === id).contadores.cenarios;
+
+      expect(await contagem()).toBe(1);
+
+      writeFileSync(feature, 'Feature: Sync\n  Scenario: primeiro\n    Given algo\n  Scenario: segundo\n    Given outro\n');
+      const sync = await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      expect(sync.statusCode).toBe(200);
+      expect(sync.json().status).toBe('concluida');
+      expect(await contagem()).toBe(2);
+
+      writeFileSync(feature, 'Feature: Sync\n  Scenario: só este\n    Given algo\n');
+      await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      expect(await contagem()).toBe(1);
+
+      rm(feature);
+      await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      expect(await contagem()).toBe(0);
+
+      await app.inject({ method: 'DELETE', url: `/api/v1/projetos/${id}` });
+    } finally {
+      rm(pasta, { recursive: true, force: true });
+    }
+  });
+});

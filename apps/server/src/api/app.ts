@@ -176,9 +176,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     };
   });
 
-  app.post(`${api}/varreduras`, async (_req, reply) => {
-    void deps.state.refresh();
-    return reply.code(202).send({ status: 'iniciada', emVarredura: true });
+  /** Varredura completa e síncrona: só responde depois de reler todos os projetos registrados. */
+  app.post(`${api}/varreduras`, async () => {
+    const snap = await deps.state.refresh();
+    return { status: 'concluida', geradoEm: snap.geradoEm, duracaoMs: snap.duracaoMs, projetos: snap.projetos.length };
   });
 
   app.get(`${api}/visao-geral`, async () => {
