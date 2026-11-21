@@ -52,7 +52,7 @@ export interface CenarioModel {
   passos: Passo[];
   exemplos: string[][];
   resultado: ScenarioResult;
-  /** @tela: e @componente: do cenário, já com herança da regra e da funcionalidade. */
+  /** @tela- e @componente- do cenário, já com herança da regra e da funcionalidade. */
   telas: string[];
   componentes: string[];
   capturas: CapturaModel[];

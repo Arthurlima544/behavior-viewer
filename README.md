@@ -117,7 +117,7 @@ Para que a mesma regra seja consolidada entre stacks, use **o mesmo ID** em toda
   ```
 
 - **Arquivo sem bloco de funcionalidade é ignorado.** Se o arquivo não tiver `Funcionalidade:` nem `Feature:`, as regras dele não aparecem no catálogo.
-- **Tags de tela e componente usam dois-pontos:** `@tela:CheckoutPage` e `@componente:FormularioEndereco`. A forma com hífen (`@tela-CheckoutPage`) não é reconhecida.
+- **Tags de tela e componente usam hífen:** `@tela-CheckoutPage` e `@componente-FormularioEndereco`. Use hífen, não dois-pontos: o runner de testes do Dart (`package:test`) rejeita tags com dois-pontos. O Behavior Viewer aceita as duas formas, mas a documentação e os prompts usam hífen.
 
 Para verificar, a visão geral e a tela **Projetos → Funcionalidades e testes** mostram o número de arquivos, funcionalidades, regras e cenários que o Behavior Viewer identificou.
 

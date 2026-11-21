@@ -1,7 +1,7 @@
 import type { ComponenteRef, TelaRef } from '../api/types';
 import styles from './TelasPanel.module.css';
 
-/** Telas e componentes ligados à regra, pela tag @tela: ou pela rota citada num passo (docs/prompts, seção 2). */
+/** Telas e componentes ligados à regra, pela tag @tela- ou pela rota citada num passo (docs/prompts, seção 2). */
 export function TelasPanel({ telas, componentes }: { telas: TelaRef[]; componentes: ComponenteRef[] }) {
   return (
     <section className={styles.box} aria-labelledby="telas-titulo">
@@ -10,7 +10,7 @@ export function TelasPanel({ telas, componentes }: { telas: TelaRef[]; component
       </h2>
       {telas.length === 0 ? (
         <p className={styles.hint}>
-          Nenhuma tela identificada. Adicione <span className="mono">@tela:</span> à funcionalidade ou cite a rota de uma tela
+          Nenhuma tela identificada. Adicione <span className="mono">@tela-</span> à funcionalidade ou cite a rota de uma tela
           declarada em um passo.
         </p>
       ) : (

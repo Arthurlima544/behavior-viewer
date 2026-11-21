@@ -9,7 +9,18 @@ import { caminhoCapturaValido, capturasDoCenario, lerIndiceCapturas, resolverTel
 const tmp = mkdtempSync(join(tmpdir(), 'bv-telas-'));
 afterAll(() => rmSync(tmp, { recursive: true, force: true }));
 
-describe('tags @tela: e @componente: (item 1)', () => {
+describe('tags @tela- e @componente- (item 1)', () => {
+  it('aceita o formato com hífen, exigido pelo runner do Dart', () => {
+    expect(metadadosDe(['@tela-CheckoutPage', '@componente-TaskFormSheet', '@componente-Roadmap-Banner'])).toEqual({
+      telas: ['CheckoutPage'],
+      componentes: ['TaskFormSheet', 'Roadmap-Banner'],
+    });
+  });
+
+  it('rejeita tags que não são identificadores (com espaço, ponto ou barra)', () => {
+    expect(metadadosDe(['@tela-Checkout Page', '@tela-a.b', '@tela-a/b'])).toEqual({ telas: [], componentes: [] });
+  });
+
   it('lê telas e componentes das tags', () => {
     expect(metadadosDe(['@tela:CheckoutPage', '@componente:A', '@componente:B', '@outra'])).toEqual({
       telas: ['CheckoutPage'],

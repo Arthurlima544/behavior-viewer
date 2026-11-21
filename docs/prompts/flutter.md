@@ -8,21 +8,21 @@ Stack deste projeto: Flutter com testes de integração (`integration_test`) e B
 
 Adicione tags nos arquivos `.feature` usando estas duas chaves:
 
-- `@tela:<NomeDaTela>`: a classe da tela (`Screen` ou `Page`) onde o comportamento acontece.
-- `@componente:<NomeDoWidget>`: o widget principal envolvido.
+- `@tela-<NomeDaTela>`: a classe da tela (`Screen` ou `Page`) onde o comportamento acontece.
+- `@componente-<NomeDoWidget>`: o widget principal envolvido.
 
 Regras:
 - Coloque as tags no bloco `Funcionalidade:` quando a funcionalidade inteira for de uma tela. Use a tag no `Rule:` ou no `Cenário:` quando a regra ou o cenário for de outra tela ou widget.
 - Use o nome **exato** da classe, sem espaços (por exemplo, `CheckoutScreen` para `class CheckoutScreen`), para que a ferramenta ligue com o código.
-- Aceite várias tags de componente por cenário, por exemplo `@componente:ResumoCarrinho @componente:BotaoFinalizar`.
+- Aceite várias tags de componente por cenário, por exemplo `@componente-ResumoCarrinho @componente-BotaoFinalizar`.
 - Não coloque nomes de tela ou widget no título do cenário. O título descreve o resultado para o usuário, por exemplo "Cupom expirado é recusado com mensagem clara".
 
 Exemplo:
 ```gherkin
-@tela:CheckoutScreen
+@tela-CheckoutScreen
 Funcionalidade: Checkout
 
-  @RN-CHK-001 @componente:FormularioEndereco
+  @RN-CHK-001 @componente-FormularioEndereco
   Regra: Pedido só pode ser finalizado com endereço de entrega válido
 
     Cenário: Finalizar sem endereço válido

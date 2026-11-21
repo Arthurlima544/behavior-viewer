@@ -18,9 +18,9 @@ export interface CenarioParsed {
   passos: Passo[];
   /** Linhas de exemplo, com o cabeçalho na primeira linha (apenas para esquemas). */
   exemplos: string[][];
-  /** Telas declaradas por @tela: (herdadas da regra ou da funcionalidade quando ausentes). */
+  /** Telas declaradas por @tela- (herdadas da regra ou da funcionalidade quando ausentes). */
   telas: string[];
-  /** Componentes declarados por @componente: (com a mesma herança). */
+  /** Componentes declarados por @componente- (com a mesma herança). */
   componentes: string[];
 }
 
@@ -37,7 +37,7 @@ export interface RegraParsed {
   resultado?: string;
   cenarios: CenarioParsed[];
   avisos: string[];
-  /** Telas da regra: @tela: da regra ou, se ausente, da funcionalidade. */
+  /** Telas da regra: @tela- da regra ou, se ausente, da funcionalidade. */
   telas: string[];
   componentes: string[];
 }
@@ -77,10 +77,13 @@ export interface MetadadosTela {
   componentes: string[];
 }
 
-const TAG_TELA = /^@tela:([\w][\w.\-/]*)$/;
-const TAG_COMPONENTE = /^@componente:([\w][\w.\-/]*)$/;
+const TAG_TELA = /^@tela[-:]([A-Za-z_][\w-]*)$/;
+const TAG_COMPONENTE = /^@componente[-:]([A-Za-z_][\w-]*)$/;
 
-/** Lê @tela:<Nome> e @componente:<Nome> de uma lista de tags, sem duplicatas. */
+/**
+ * Lê @tela-<Nome> e @componente-<Nome> de uma lista de tags, sem duplicatas.
+ * Aceita também a forma com dois-pontos (@tela:<Nome>), usada por projetos antigos.
+ */
 export function metadadosDe(tags: readonly string[]): MetadadosTela {
   const telas = new Set<string>();
   const componentes = new Set<string>();

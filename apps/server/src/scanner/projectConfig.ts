@@ -18,7 +18,7 @@ export interface ComponenteConfig {
   arquivo?: string;
 }
 
-/** Tela declarada no .behavior.yml: nome usado nas tags @tela:, rota e componentes (docs/prompts). */
+/** Tela declarada no .behavior.yml: nome usado nas tags @tela-, rota e componentes (docs/prompts). */
 export interface TelaConfig {
   nome: string;
   rota?: string;

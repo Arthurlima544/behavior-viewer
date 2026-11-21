@@ -213,7 +213,7 @@ Cada decisão importante fica registrada aqui, com contexto, escolha e consequê
 
 **Decisão.** O projeto declara a convenção em três partes, descritas em [docs/prompts](prompts/README.md):
 
-1. Tags `@tela:<Nome>` e `@componente:<Nome>` nos arquivos `.feature`, com herança funcionalidade → regra → cenário (RF-55).
+1. Tags `@tela-<Nome>` e `@componente-<Nome>` nos arquivos `.feature`, com herança funcionalidade → regra → cenário (RF-55).
 2. Seção `telas` no `.behavior.yml`, com nome, rota, arquivo e componentes. A regra também se liga a uma tela quando um passo cita a rota entre aspas (RF-56).
 3. Capturas em `reports/capturas/`, com `indice.json` na raiz do projeto. O índice associa cada captura a uma funcionalidade, um cenário e um passo (RF-57).
 

@@ -95,7 +95,7 @@ export function componentesResolvidos(nomes: string[], telas: TelaConfig[]): Com
 
 /**
  * Telas de uma regra (RF de mapa de telas). Uma tela entra por:
- * - tag `@tela:` nos arquivos da regra (origem "tag"), ou
+ * - tag `@tela-` nos arquivos da regra (origem "tag"), ou
  * - rota declarada no .behavior.yml citada entre aspas em um passo (origem "rota").
  */
 export function resolverTelas(

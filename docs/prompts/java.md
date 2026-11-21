@@ -8,21 +8,21 @@ Stack deste projeto: Java com Cucumber-JVM e Selenium (ou Appium, para mobile). 
 
 Adicione tags nos arquivos `.feature` usando estas duas chaves:
 
-- `@tela:<NomeDaTela>`: a página (Page Object ou view) onde o comportamento acontece.
-- `@componente:<NomeDoComponente>`: o componente principal envolvido.
+- `@tela-<NomeDaTela>`: a página (Page Object ou view) onde o comportamento acontece.
+- `@componente-<NomeDoComponente>`: o componente principal envolvido.
 
 Regras:
 - Coloque as tags no bloco `Feature:` quando a funcionalidade inteira for de uma tela. Use a tag no `Rule:` ou no `Scenario:` quando a regra ou o cenário for de outra tela ou componente.
 - Use o nome **exato** da classe, sem espaços (por exemplo, `CheckoutPage` para `CheckoutPage.java`), para que a ferramenta ligue com o código.
-- Aceite várias tags de componente por cenário, por exemplo `@componente:ResumoCarrinho @componente:BotaoFinalizar`.
+- Aceite várias tags de componente por cenário, por exemplo `@componente-ResumoCarrinho @componente-BotaoFinalizar`.
 - Não coloque nomes de tela ou componente no título do cenário. O título descreve o resultado para o usuário, por exemplo "Cupom expirado é recusado com mensagem clara".
 
 Exemplo:
 ```gherkin
-@tela:CheckoutPage
+@tela-CheckoutPage
 Feature: Checkout
 
-  @RN-CHK-001 @componente:FormularioEndereco
+  @RN-CHK-001 @componente-FormularioEndereco
   Rule: Pedido só pode ser finalizado com endereço de entrega válido
 
     Scenario: Finalizar sem endereço válido
