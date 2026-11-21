@@ -13,6 +13,13 @@ import {
 } from '@behavior-viewer/domain';
 import type { AppConfig } from './config.js';
 import { displayPath } from './paths.js';
+import {
+  CAPTURAS_INDEX,
+  capturasDoCenario,
+  componentesResolvidos,
+  lerIndiceCapturas,
+  resolverTelas,
+} from './screens.js';
 import { discoverFeatures, isIgnored, resolveStack, type FeatureFileRef } from './scanner/discover.js';
 import { readProjectConfig, type ProjectConfig } from './scanner/projectConfig.js';
 import { loadReports, type LoadedReports } from './scanner/reports.js';
@@ -33,6 +40,7 @@ import type {
   RegraModel,
   Snapshot,
   StackModel,
+  TelaDeclarada,
 } from './model.js';
 
 interface FeatureEntry {
@@ -249,6 +257,13 @@ async function buildProject(
     });
   }
 
+  // Capturas de tela e índice do projeto (reports/capturas/indice.json).
+  const indice = await lerIndiceCapturas(root);
+  for (const mensagem of indice.erros) {
+    erros.push({ projetoId: id, arquivo: CAPTURAS_INDEX, linha: null, tipo: 'captura', mensagem });
+  }
+  const telasCfg = acc.config?.telas ?? [];
+
   // Implementações (uma por regra por arquivo de funcionalidade).
   const drafts: ImplDraft[] = [];
   const funcMap = new Map<string, FuncionalidadeModel>();
@@ -276,6 +291,9 @@ async function buildProject(
         passos: c.passos.map((p) => ({ palavra: p.palavra, texto: p.texto })),
         exemplos: c.exemplos,
         resultado: reports ? reports.index.lookup(f.parsed.nome, c.nome) : 'sem-execucao',
+        telas: c.telas,
+        componentes: c.componentes,
+        capturas: capturasDoCenario(indice.entradas, f.parsed.nome, c.nome),
       }));
       drafts.push({
         key: consolidationKey(regra, f.parsed.nome),
@@ -316,6 +334,16 @@ async function buildProject(
       ultimaExecucao: d.ultimaExecucao,
     }));
     const avisos = [...new Set(group.flatMap((d) => d.regra.avisos))];
+    // Telas e componentes: união das stacks, para que uma tag em qualquer stack valha para a regra.
+    const telasRegra = resolverTelas(
+      [...new Set(group.flatMap((d) => d.regra.telas))],
+      group.flatMap((d) => d.cenarios.flatMap((c) => c.passos.map((p) => p.texto))),
+      telasCfg,
+    );
+    const componentesRegra = componentesResolvidos(
+      [...new Set(group.flatMap((d) => [...d.regra.componentes, ...d.cenarios.flatMap((c) => c.componentes)]))],
+      telasCfg,
+    );
     if (!tagged && group.length > 1)
       avisos.push('consolidada pelo título (sem ID em todas as stacks)');
     const tags = [...new Set([...first.funcionalidadeTags, ...group.flatMap((d) => d.regra.tags)])];
@@ -329,6 +357,8 @@ async function buildProject(
       resultado,
       tags,
       avisos,
+      telas: telasRegra,
+      componentes: componentesRegra,
       funcionalidadeKey: slugify(first.funcionalidadeNome),
       funcionalidadeNome: first.funcionalidadeNome,
       status: worstRuleStatus(implementacoes.map((i) => i.status)),
@@ -391,9 +421,21 @@ async function buildProject(
     };
   });
 
+  const telasDeclaradas: TelaDeclarada[] = telasCfg.map((t) => ({
+    nome: t.nome,
+    rota: t.rota ?? null,
+    arquivo: t.arquivo ?? null,
+    componentes: componentesResolvidos(
+      t.componentes.map((c) => c.nome),
+      telasCfg,
+    ),
+    regras: regras.filter((r) => r.telas.some((x) => x.nome === t.nome)).length,
+  }));
+
   const projeto: ProjetoModel = {
     id,
     nome,
+    telas: telasDeclaradas,
     descricao: acc.config?.descricao ?? '',
     caminho: displayPath(root, appConfig.browseRoots, appConfig.browseLabel),
     origem,

@@ -18,6 +18,10 @@ export interface CenarioParsed {
   passos: Passo[];
   /** Linhas de exemplo, com o cabeçalho na primeira linha (apenas para esquemas). */
   exemplos: string[][];
+  /** Telas declaradas por @tela: (herdadas da regra ou da funcionalidade quando ausentes). */
+  telas: string[];
+  /** Componentes declarados por @componente: (com a mesma herança). */
+  componentes: string[];
 }
 
 export interface RegraParsed {
@@ -33,6 +37,9 @@ export interface RegraParsed {
   resultado?: string;
   cenarios: CenarioParsed[];
   avisos: string[];
+  /** Telas da regra: @tela: da regra ou, se ausente, da funcionalidade. */
+  telas: string[];
+  componentes: string[];
 }
 
 export interface FuncionalidadeParsed {
@@ -62,6 +69,46 @@ const OUTCOME = new Set(['Então', 'Entao', 'Then']);
 function businessText(text: string): string {
   const trimmed = text.trim().replace(/^que\s+/i, '');
   return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+/** Metadados de tela e componente lidos das tags Gherkin (docs/prompts). */
+export interface MetadadosTela {
+  telas: string[];
+  componentes: string[];
+}
+
+const TAG_TELA = /^@tela:([\w][\w.\-/]*)$/;
+const TAG_COMPONENTE = /^@componente:([\w][\w.\-/]*)$/;
+
+/** Lê @tela:<Nome> e @componente:<Nome> de uma lista de tags, sem duplicatas. */
+export function metadadosDe(tags: readonly string[]): MetadadosTela {
+  const telas = new Set<string>();
+  const componentes = new Set<string>();
+  for (const tag of tags) {
+    const t = TAG_TELA.exec(tag);
+    if (t?.[1]) telas.add(t[1]);
+    const c = TAG_COMPONENTE.exec(tag);
+    if (c?.[1]) componentes.add(c[1]);
+  }
+  return { telas: [...telas], componentes: [...componentes] };
+}
+
+/**
+ * Herança de metadados: para cada tipo (tela, componente), vale a declaração mais específica.
+ * Cenário sobrepõe regra, e regra sobrepõe funcionalidade.
+ */
+function aplicarHeranca(funcionalidadeTags: string[], regras: RegraParsed[]): void {
+  const deFuncionalidade = metadadosDe(funcionalidadeTags);
+  for (const regra of regras) {
+    const deRegra = metadadosDe(regra.tags);
+    regra.telas = deRegra.telas.length > 0 ? deRegra.telas : deFuncionalidade.telas;
+    regra.componentes = deRegra.componentes.length > 0 ? deRegra.componentes : deFuncionalidade.componentes;
+    for (const cenario of regra.cenarios) {
+      const deCenario = metadadosDe(cenario.tags);
+      cenario.telas = deCenario.telas.length > 0 ? deCenario.telas : regra.telas;
+      cenario.componentes = deCenario.componentes.length > 0 ? deCenario.componentes : regra.componentes;
+    }
+  }
 }
 
 function tagNames(tags: readonly { name: string }[]): string[] {
@@ -99,6 +146,8 @@ function mapScenario(sc: any): CenarioParsed {
     tags: tagNames(sc.tags ?? []),
     passos: mapSteps(sc.steps ?? []),
     exemplos: isOutline ? exemplos : [],
+    telas: [],
+    componentes: [],
   };
 }
 
@@ -140,6 +189,8 @@ function makeRegra(
   }
   return {
     idTag,
+    telas: [],
+    componentes: [],
     tags: tags.filter((t) => !RN_TAG.test(t)),
     origem,
     titulo,
@@ -200,6 +251,8 @@ export function parseFeatureSource(source: string, fileLabel: string): ParseOutc
   for (const sc of looseScenarios) {
     regras.push(makeRegra(sc.nome, '', sc.linha, [], [sc], true, fileLabel));
   }
+
+  aplicarHeranca(tagNames(feature.tags ?? []), regras);
 
   return {
     ok: true,

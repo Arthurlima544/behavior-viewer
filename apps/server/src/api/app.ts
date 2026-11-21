@@ -26,6 +26,8 @@ import type { ProjetoModel, RegraModel, Snapshot } from '../model.js';
 import { HISTORY_SIZE, type Store } from '../store.js';
 import type { AppState } from '../state.js';
 import { gherkinOf } from './gherkin.js';
+import { createReadStream } from 'node:fs';
+import { caminhoCapturaValido } from '../screens.js';
 
 export interface AppDeps {
   config: AppConfig;
@@ -315,6 +317,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         relatorios: s.relatorios,
         runner: RUNNER_LABEL[s.id],
       })),
+      telas: p.telas,
       testes: {
         arquivosFeature: arquivosFeature.length,
         funcionalidades: p.funcionalidades.length,
@@ -425,6 +428,30 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
   // ---- Regras --------------------------------------------------------------
 
+  /** Imagem de captura de tela de um projeto. Só serve arquivos dentro da pasta do projeto (docs/prompts). */
+  app.get<{ Querystring: { projeto?: string; arquivo?: string } }>(`${api}/capturas`, async (req, reply) => {
+    const snap = snapshotOrFail();
+    const projeto = projectOrFail(snap, req.query.projeto ?? '');
+    const arquivo = req.query.arquivo ?? '';
+    if (!caminhoCapturaValido(arquivo)) {
+      throw new ApiError(400, 'captura-invalida', 'caminho de captura inválido');
+    }
+    const root = deps.state.roots.get(projeto.id);
+    if (!root) throw new ApiError(404, 'captura-nao-encontrada', 'pasta do projeto não encontrada');
+    const rootReal = await fsp.realpath(root).catch(() => root);
+    const real = await fsp.realpath(join(root, arquivo)).catch(() => null);
+    if (!real) throw new ApiError(404, 'captura-nao-encontrada', 'captura não encontrada');
+    if (!isInside(real, rootReal)) {
+      throw new ApiError(403, 'fora-do-projeto', 'a captura está fora da pasta do projeto');
+    }
+    const stat = await fsp.stat(real);
+    if (!stat.isFile()) throw new ApiError(404, 'captura-nao-encontrada', 'captura não encontrada');
+    if (stat.size > MAX_CAPTURA_BYTES) throw new ApiError(413, 'captura-grande', 'captura maior que o limite');
+    reply.type(mimeDe(real));
+    reply.header('Cache-Control', 'private, max-age=60');
+    return reply.send(createReadStream(real));
+  });
+
   app.get<{ Params: { id: string }; Querystring: { projeto?: string } }>(
     `${api}/regras/:id`,
     async (req) => {
@@ -444,7 +471,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
             funcionalidade: i.funcionalidade,
             status: i.status,
             runner: RUNNER_LABEL[i.stack],
-            cenarios: i.cenarios,
+            cenarios: i.cenarios.map((c) => ({
+              ...c,
+              capturas: c.capturas.map((k) => ({ ...k, url: capturaUrl(projeto.id, k.arquivo) })),
+            })),
             ultimaExecucao: i.ultimaExecucao,
             ultimaAlteracao: commit,
           };
@@ -462,6 +492,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         resultado: r.resultado,
         tags: r.tags,
         avisos: r.avisos,
+        telas: r.telas,
+        componentes: r.componentes,
         status: r.status,
         projeto: { id: projeto.id, nome: projeto.nome, ref: projeto.ref },
         funcionalidade: funcionalidade
@@ -557,6 +589,28 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   }
 
   return app;
+}
+
+/** Tamanho máximo servido para uma captura (evita carregar arquivos gigantes). */
+const MAX_CAPTURA_BYTES = 15 * 1024 * 1024;
+
+function capturaUrl(projetoId: string, arquivo: string): string {
+  return `/api/v1/capturas?projeto=${encodeURIComponent(projetoId)}&arquivo=${encodeURIComponent(arquivo)}`;
+}
+
+function mimeDe(caminho: string): string {
+  const ext = caminho.toLowerCase().split('.').pop();
+  switch (ext) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'webp':
+      return 'image/webp';
+    case 'gif':
+      return 'image/gif';
+    default:
+      return 'image/png';
+  }
 }
 
 const RUNNER_LABEL: Record<Stack, string> = {

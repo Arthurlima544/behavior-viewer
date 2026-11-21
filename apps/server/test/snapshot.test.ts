@@ -124,3 +124,43 @@ describe('snapshot das fixtures', () => {
     expect(chk?.implementacoes).toHaveLength(3);
   });
 });
+
+describe('telas, componentes e capturas no snapshot (itens 1, 3 e 4)', () => {
+  it('a regra herda @tela da funcionalidade e resolve a tela declarada com rota e componentes', () => {
+    const r = marketplace().regras.find((x) => x.id === 'RN-CHK-001')!;
+    const tela = r.telas.find((t) => t.nome === 'CheckoutPage');
+    expect(tela).toMatchObject({ origem: 'tag', rota: '/checkout', declarada: true });
+    expect(r.componentes.map((c) => c.nome)).toContain('FormularioEndereco');
+    expect(r.componentes.find((c) => c.nome === 'FormularioEndereco')?.arquivo).toBe(
+      'web/src/components/FormularioEndereco.tsx',
+    );
+  });
+
+  it('componente declarado em uma stack vale para a regra consolidada', () => {
+    const r = marketplace().regras.find((x) => x.id === 'RN-CHK-004')!;
+    expect(r.componentes.map((c) => c.nome)).toContain('ResumoCarrinho');
+  });
+
+  it('uma rota citada num passo liga a regra à tela, com origem "rota"', () => {
+    const r = marketplace().regras.find((x) => x.id === 'RN-CUP-001')!;
+    expect(r.telas.find((t) => t.nome === 'CupomPage')).toMatchObject({ origem: 'rota', rota: '/carrinho/cupom' });
+  });
+
+  it('a captura do índice é anexada ao cenário correspondente', () => {
+    const r = marketplace().regras.find((x) => x.id === 'RN-CHK-001')!;
+    const web = r.implementacoes.find((i) => i.stack === 'typescript')!;
+    const cenario = web.cenarios.find((c) => c.nome === 'Finalizar sem endereço válido')!;
+    expect(cenario.capturas.map((k) => k.arquivo)).toEqual([
+      'reports/capturas/checkout/finalizar-sem-endereco-valido/01-dado.png',
+      'reports/capturas/checkout/finalizar-sem-endereco-valido/02-quando.png',
+    ]);
+    expect(cenario.capturas[0]?.tela).toBe('CheckoutPage');
+    expect(cenario.telas).toEqual(['CheckoutPage']);
+  });
+
+  it('o projeto expõe as telas declaradas com a contagem de regras que as usam', () => {
+    const tela = marketplace().telas.find((t) => t.nome === 'CheckoutPage');
+    expect(tela?.rota).toBe('/checkout');
+    expect(tela?.regras).toBeGreaterThan(0);
+  });
+});

@@ -11,6 +11,40 @@ export interface Passo {
   texto: string;
 }
 
+/** Captura de tela tirada durante a execução de um passo (docs/prompts, seção 3). */
+export interface CapturaModel {
+  passo: string;
+  /** Caminho relativo à raiz do projeto. Servido pela API, nunca como caminho do disco. */
+  arquivo: string;
+  tela: string | null;
+}
+
+/** Componente de uma tela, com o arquivo de origem quando declarado. */
+export interface ComponenteRef {
+  nome: string;
+  arquivo: string | null;
+}
+
+/** Tela ligada a uma regra. origem: "tag" (declarada no Gherkin) ou "rota" (citada num passo). */
+export interface TelaRef {
+  nome: string;
+  rota: string | null;
+  arquivo: string | null;
+  origem: 'tag' | 'rota';
+  /** false quando a tag existe mas a tela não está no .behavior.yml. */
+  declarada: boolean;
+  componentes: ComponenteRef[];
+}
+
+/** Tela declarada no .behavior.yml, com quantas regras a referenciam. */
+export interface TelaDeclarada {
+  nome: string;
+  rota: string | null;
+  arquivo: string | null;
+  componentes: ComponenteRef[];
+  regras: number;
+}
+
 export interface CenarioModel {
   nome: string;
   linha: number;
@@ -18,6 +52,10 @@ export interface CenarioModel {
   passos: Passo[];
   exemplos: string[][];
   resultado: ScenarioResult;
+  /** @tela: e @componente: do cenário, já com herança da regra e da funcionalidade. */
+  telas: string[];
+  componentes: string[];
+  capturas: CapturaModel[];
 }
 
 /** Presença de uma regra em uma stack (uma implementação). */
@@ -40,6 +78,8 @@ export interface RegraModel {
   resultado: string | null;
   tags: string[];
   avisos: string[];
+  telas: TelaRef[];
+  componentes: ComponenteRef[];
   funcionalidadeKey: string;
   funcionalidadeNome: string;
   status: RuleStatus;
@@ -93,7 +133,7 @@ export interface ErroModel {
   projetoId: string | null;
   arquivo: string;
   linha: number | null;
-  tipo: 'feature' | 'config' | 'relatorio';
+  tipo: 'feature' | 'config' | 'relatorio' | 'captura';
   mensagem: string;
 }
 
@@ -110,6 +150,7 @@ export interface ProjetoModel {
   contadores: { regras: number; funcionalidades: number; cenarios: number };
   status: StatusCounts;
   funcionalidades: FuncionalidadeModel[];
+  telas: TelaDeclarada[];
   regras: RegraModel[];
   matriz: MatrizLinhaModel[];
   divergencias: DivergenciaModel[];

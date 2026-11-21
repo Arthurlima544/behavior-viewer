@@ -240,3 +240,45 @@ describe('remoção de projetos', () => {
     expect(again.statusCode).toBe(404);
   });
 });
+
+describe('telas e capturas pela API (itens 3 e 4)', () => {
+  it('o detalhe da regra traz telas, componentes e capturas com URL de imagem', async () => {
+    const res = await app.inject({ method: 'GET', url: `/api/v1/regras/RN-CHK-001?projeto=${marketplaceId}` });
+    const body = res.json();
+    expect(body.telas.map((t: { nome: string }) => t.nome)).toContain('CheckoutPage');
+    const web = body.implementacoes.find((i: { stack: string }) => i.stack === 'typescript');
+    const cenario = web.cenarios.find((c: { nome: string }) => c.nome === 'Finalizar sem endereço válido');
+    expect(cenario.capturas[0].url).toMatch(/^\/api\/v1\/capturas\?projeto=/);
+  });
+
+  it('serve a imagem de captura como PNG', async () => {
+    const arquivo = encodeURIComponent('reports/capturas/checkout/finalizar-sem-endereco-valido/01-dado.png');
+    const res = await app.inject({ method: 'GET', url: `/api/v1/capturas?projeto=${marketplaceId}&arquivo=${arquivo}` });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toBe('image/png');
+    expect(res.rawPayload.subarray(1, 4).toString('ascii')).toBe('PNG');
+  });
+
+  it('recusa caminho de captura que sai do projeto (400)', async () => {
+    const arquivo = encodeURIComponent('../../package.json');
+    const res = await app.inject({ method: 'GET', url: `/api/v1/capturas?projeto=${marketplaceId}&arquivo=${arquivo}` });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('recusa caminho absoluto (400)', async () => {
+    const arquivo = encodeURIComponent('/etc/passwd.png');
+    const res = await app.inject({ method: 'GET', url: `/api/v1/capturas?projeto=${marketplaceId}&arquivo=${arquivo}` });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('captura inexistente retorna 404', async () => {
+    const arquivo = encodeURIComponent('reports/capturas/nao-existe.png');
+    const res = await app.inject({ method: 'GET', url: `/api/v1/capturas?projeto=${marketplaceId}&arquivo=${arquivo}` });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('a estrutura do projeto lista as telas declaradas', async () => {
+    const res = await app.inject({ method: 'GET', url: `/api/v1/projetos/${marketplaceId}/estrutura` });
+    expect(res.json().telas.map((t: { nome: string }) => t.nome)).toEqual(expect.arrayContaining(['CheckoutPage', 'CupomPage']));
+  });
+});
