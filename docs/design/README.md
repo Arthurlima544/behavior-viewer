@@ -240,3 +240,26 @@ Itens encontrados ao analisar o canvas. Cada um tem uma decisão registrada em [
 - Os quatro artboards são a referência de regressão visual. Capturas de cada tela no viewport de 1440 px são comparadas em CI com tolerância definida em `tests/visual/`.
 - Cada token deste documento é usado via variável CSS (`--bg`, `--text-muted`, ...). Nenhum valor hexadecimal é escrito diretamente em componente.
 - Nova tela ou componente só entra no código após ter entrada neste documento.
+
+---
+
+## 7. Desvios conscientes do canvas
+
+Itens em que a implementação diverge do canvas, com a decisão que motivou cada um:
+
+| Tela | Canvas | Implementado | Motivo |
+|---|---|---|---|
+| Sidebar | Wordmark `ruleset` | `Behavior Viewer`, com a marca `R/` mantida | ADR-0010 |
+| Sidebar | "Sincronizado pelo CI · há 12 min" | "Sincronizado há X" + botão "Sincronizar" | Origem local no MVP, ADR-0002 |
+| Visão geral | KPI "Passando" com "última execução no CI" | "relatórios há X" | Origem local dos relatórios |
+| Catálogo | Menu "Status: todos" | Seletor nativo com as mesmas opções | Acessibilidade nativa, sem componente customizado |
+| Catálogo | Lista de funcionalidades | Lista completa, com "Ver todas" quando há filtro | RF-27, desvio 3 de §5 |
+| Detalhe | Botão "Copiar .feature para o app" | "Copiar Gherkin" | ADR-0007 |
+| Detalhe | Cenários com execuções por linguagem no cabeçalho | Resultado do cenário na sua própria stack | Nomes de cenário diferem entre linguagens |
+| Apresentação | Cartões de situação e resultado sempre visíveis | Cartão oculto quando não há texto | ADR-0006, "sem dados = cartão oculto" |
+| Apresentação | Sem teclado especificado | ← → , Home, End e Esc | ADR-0008 |
+| Todas | Fontes do Google Fonts | Inter e JetBrains Mono empacotadas | RNF-04, funcionamento offline |
+
+Itens que permanecem como no canvas: tokens de cor, tipografia, raios, alturas, estrutura de cada tela e textos de referência (§4).
+
+Regressão visual automatizada dos quatro artboards (§6) ainda não está implementada. A conferência foi feita por captura de tela manual em 1440 px.

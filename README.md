@@ -2,7 +2,7 @@
 
 Visualizador open source de **regras de negócio** extraídas de testes BDD (Gherkin, `.feature`). Lê os arquivos dos seus projetos e mostra cada regra de forma clara: em que projeto ela existe, em quais stacks está testada, qual o status da última execução e onde há divergência entre Flutter, TypeScript e Java.
 
-> **Status:** em planejamento. A documentação de requisitos, design e arquitetura está pronta. O código começa pela Fase 0 do [roadmap](docs/roadmap.md).
+> **Status:** primeira versão funcional em desenvolvimento local. Descoberta de projetos, parser Gherkin, API, interface fiel ao design, modo apresentação e imagem Docker estão implementados e testados. Ver o [roadmap](docs/roadmap.md) para o que falta antes da 1.0.
 
 ---
 
@@ -32,53 +32,43 @@ Design de referência (canvas): [visão geral, catálogo, detalhe e modo apresen
 
 ## Início rápido
 
-> Disponível a partir da versão 1.0. Até lá, o fluxo abaixo é o alvo do projeto.
-
 Pré-requisitos: Docker Desktop (macOS e Windows) ou Docker Engine com o plugin Compose (Linux).
 
-1. Crie um `docker-compose.yml` (ou use o da raiz do repositório) e aponte a pasta onde estão seus projetos:
+```bash
+# Aponte para a pasta onde estão seus projetos (somente leitura)
+BEHAVIOR_HOST_WORKSPACE=~/code docker compose up --build
+```
 
-   ```yaml
-   services:
-     behavior-viewer:
-       image: ghcr.io/<org>/behavior-viewer:latest
-       ports:
-         - "127.0.0.1:8787:8787"
-       environment:
-         BEHAVIOR_WORKSPACE: /workspace
-       volumes:
-         - ~/code:/workspace:ro
-         - behavior-data:/data
-       restart: unless-stopped
+Abra **http://localhost:8787**. Sem a variável, o compose usa a pasta `fixtures/` do repositório como exemplo.
 
-   volumes:
-     behavior-data:
-   ```
-
-2. Suba o serviço:
-
-   ```bash
-   docker compose up -d
-   ```
-
-3. Abra **http://localhost:8787** no navegador.
+Para várias pastas, monte cada uma em `/workspace/<nome>` no `docker-compose.yml` e liste todas em `BEHAVIOR_WORKSPACE`, separadas por vírgula.
 
 **Windows:** mantenha os projetos dentro do WSL2 ou em um drive compartilhado no Docker Desktop. Ver as [notas por sistema operacional](docs/arquitetura.md#83-notas-por-sistema-operacional).
 
----
+### Desenvolvimento
+
+Pré-requisitos: Node.js 22 LTS e npm 10 ou superior.
+
+```bash
+npm ci
+npm run dev          # API em :8787 e interface em :5173 (recarga automática)
+npm test             # testes unitários e de API
+npm run test:e2e     # navegador real (Playwright), sobre as fixtures
+npm run lint && npm run typecheck
+```
 
 ## Configuração
 
 | Variável | Padrão | Descrição |
 |---|---|---|
 | `BEHAVIOR_WORKSPACE` | `/workspace` | Uma ou mais pastas raiz, separadas por vírgula. |
-| `BEHAVIOR_PORT` | `8787` | Porta interna do servidor. |
-| `BEHAVIOR_SCAN_INTERVAL` | `60` | Intervalo de varredura em segundos. |
+| `BEHAVIOR_PORT` | `8787` | Porta do servidor. |
+| `BEHAVIOR_HOST` | `127.0.0.1` | Endereço de escuta. No contêiner é `0.0.0.0`, e o compose publica só em `127.0.0.1`. |
+| `BEHAVIOR_SCAN_INTERVAL` | `60` | Intervalo da varredura automática em segundos. `0` desativa. |
+| `BEHAVIOR_DATA_DIR` | `./data` | Onde fica o banco SQLite com seleção de projetos e histórico. |
 | `BEHAVIOR_LOG_LEVEL` | `info` | `debug`, `info`, `warn` ou `error`. |
 
-Cada projeto pode declarar nome, stacks e relatórios em um arquivo `.behavior.yml` na própria raiz. Sem o arquivo, a detecção é automática. Exemplo em [docs/arquitetura.md §4.2](docs/arquitetura.md#42-arquivo-behavioryml-rf-05).
-
----
+Cada projeto pode declarar nome, descrição, stacks e relatórios em um arquivo `.behavior.yml` na própria raiz. Sem o arquivo, a detecção é automática. Exemplo em [docs/arquitetura.md §4.2](docs/arquitetura.md#42-arquivo-behavioryml-rf-05).
 
 ## Como escrever regras reconhecidas
 

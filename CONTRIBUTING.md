@@ -37,17 +37,16 @@ Pré-requisitos:
 - Docker com Compose v2 (para testes de imagem)
 - Git
 
-Passos (os scripts estão sendo implementados na Fase 0; os nomes abaixo são os definidos):
+Passos:
 
 ```bash
 git clone <url-do-repositorio>
 cd behavior-viewer
 npm ci
-npm run dev          # servidor e SPA com recarga
-npm test             # testes unitários e de integração
-npm run test:e2e     # Playwright
-npm run test:visual  # regressão visual dos artboards
-npm run lint         # ESLint e Prettier
+npm run dev          # API em :8787 e interface em :5173, com recarga (usa as fixtures)
+npm test             # testes unitários (domínio, servidor e interface)
+npm run test:e2e     # E2E no Chromium, com o servidor real sobre as fixtures
+npm run lint         # ESLint
 npm run typecheck    # tsc --noEmit em todos os pacotes
 ```
 
@@ -59,7 +58,9 @@ docker compose up --build
 
 ### Projetos de exemplo
 
-As fixtures em `fixtures/` simulam projetos reais. Use-as para testar o scanner e o parser sem depender de código de terceiros.
+As fixtures em `fixtures/` simulam projetos reais. Use-as para testar o scanner e o parser sem depender de código de terceiros. O modo `npm run dev` já aponta para elas por meio de `apps/server/.env.development`.
+
+Regressão visual contra os artboards do design ainda não está automatizada (ver [roadmap](docs/roadmap.md)). Ao mexer em tela, compare com o design à mão.
 
 | Fixture | Testa |
 |---|---|
@@ -181,7 +182,7 @@ Se o canvas for alterado, atualize também este documento e cite a versão.
 
 - [ ] A mudança tem uma issue associada ou uma descrição clara do problema.
 - [ ] Os testes foram adicionados ou atualizados.
-- [ ] `npm run lint`, `npm run typecheck` e `npm test` passam localmente.
+- [ ] `npm run lint`, `npm run typecheck`, `npm test` e `npm run test:e2e` passam localmente.
 - [ ] A documentação afetada foi atualizada (requisitos, design, arquitetura ou ADR).
 - [ ] Mudança visual: capturas atualizadas e diferença explicada.
 - [ ] Nenhum segredo, caminho pessoal ou dado real de projeto no diff.
