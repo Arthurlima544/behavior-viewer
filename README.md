@@ -104,6 +104,23 @@ Para que a mesma regra seja consolidada entre stacks, use **o mesmo ID** em toda
 
 ---
 
+## Como organizar funcionalidades
+
+- **Uma funcionalidade é identificada pelo nome do bloco `Funcionalidade:` (ou `Feature:`).** Um arquivo `.feature` tem um bloco de funcionalidade. Na prática, uma funcionalidade costuma ser um arquivo.
+- **Mesmo nome, mesma funcionalidade.** Arquivos de stacks diferentes, ou de arquivos diferentes da mesma stack, com o mesmo nome de funcionalidade são agrupados em uma só. A comparação ignora maiúsculas, acentos e pontuação. Por isso o projeto pode ter 3 funcionalidades e 7 arquivos `.feature`, como no exemplo do Marketplace.
+- **Nomes diferentes, funcionalidades diferentes.** `Checkout` e `Finalização` viram duas funcionalidades, mesmo que tratem do mesmo fluxo. Mantenha o mesmo nome nas stacks.
+- **Arquivos de terceiros entram na contagem.** Pastas como `vendor/`, `node_modules/` ou `Pods/` podem trazer `.feature` de bibliotecas. Exclua essas pastas no `.behavior.yml`:
+
+  ```yaml
+  ignorar:
+    - "android/vendor/**"
+  ```
+
+- **Arquivo sem bloco de funcionalidade é ignorado.** Se o arquivo não tiver `Funcionalidade:` nem `Feature:`, as regras dele não aparecem no catálogo.
+- **Tags de tela e componente usam dois-pontos:** `@tela:CheckoutPage` e `@componente:FormularioEndereco`. A forma com hífen (`@tela-CheckoutPage`) não é reconhecida.
+
+Para verificar, a visão geral e a tela **Projetos → Funcionalidades e testes** mostram o número de arquivos, funcionalidades, regras e cenários que o Behavior Viewer identificou.
+
 ## Stacks suportadas
 
 | Stack | Detecção | Relatórios |
