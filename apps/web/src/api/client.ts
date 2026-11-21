@@ -27,6 +27,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     }
     throw new ApiError(res.status, codigo, mensagem);
   }
+  // 204 No Content (ex.: remoção de projeto) não tem corpo: não tente ler JSON.
+  if (res.status === 204 || res.headers.get('content-length') === '0') return undefined as T;
   return (await res.json()) as T;
 }
 

@@ -29,6 +29,22 @@ test.describe('adicionar projeto pela interface (RF-01, RF-02)', () => {
   });
 });
 
+test.describe('remover projeto pela interface (RF-02)', () => {
+  test('remover tira o card da lista sem recarregar a página', async ({ page, request }) => {
+    // Registra um projeto extra só para este teste, para não remover o projeto dos outros testes.
+    await request.post('/api/v1/projetos', { data: { caminho: '~/tests/fixtures/projeto-sem-config' } });
+    await page.goto('/projetos');
+    const lista = page.getByRole('list', { name: 'Projetos registrados' });
+    const item = lista.getByRole('listitem').filter({ hasText: 'projeto-sem-config' });
+    await expect(item).toBeVisible();
+    await item.getByRole('button', { name: 'Remover' }).click();
+    await item.getByRole('button', { name: 'Confirmar remoção' }).click();
+    await expect(lista.getByRole('listitem').filter({ hasText: 'projeto-sem-config' })).toHaveCount(0);
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await expect(lista).toContainText('Marketplace');
+  });
+});
+
 test.describe('projetos registrados e estrutura (RF-03, RF-04)', () => {
   test('lista o projeto com stacks e leva à estrutura de funcionalidades e testes', async ({ page }) => {
     await page.goto('/projetos');
