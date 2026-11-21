@@ -6,31 +6,24 @@ import styles from './ScenarioCard.module.css';
 interface Props {
   cenario: Cenario;
   modo: 'gherkin' | 'texto';
-  /** Rótulo da stack de onde vêm os passos (ex.: "Flutter"). */
-  stackRotulo?: string;
-  /** Tamanho do texto: 'normal' no detalhe, 'grande' na apresentação. */
-  escala?: 'normal' | 'grande';
 }
 
 /**
- * Cenário com os passos à esquerda e as capturas de tela ao lado. Sem captura, os passos
- * ocupam a largura toda.
+ * Cenário do detalhe: passos à esquerda, capturas de tela ao lado (compactas, para caber
+ * vários cenários na mesma tela). Sem captura, os passos ocupam a largura toda.
  */
-export function ScenarioCard({ cenario, modo, stackRotulo, escala = 'normal' }: Props) {
+export function ScenarioCard({ cenario, modo }: Props) {
   const comCapturas = cenario.capturas.length > 0;
   return (
-    <article className={`${styles.card} ${escala === 'grande' ? styles.grande : ''}`}>
+    <article className={styles.card}>
       <header className={styles.head}>
         <span className={styles.name}>
           <span className="sr-only">{TIPO_LABEL[cenario.tipo]}: </span>
           {cenario.nome}
         </span>
-        <span className={styles.meta}>
-          {stackRotulo ? <span className={styles.stack}>{stackRotulo}</span> : null}
-          <span className={styles.result}>
-            <StatusDot status={cenario.resultado} />
-            {RESULT_LABEL[cenario.resultado]}
-          </span>
+        <span className={styles.result}>
+          <StatusDot status={cenario.resultado} />
+          {RESULT_LABEL[cenario.resultado]}
         </span>
       </header>
       <div className={`${styles.body} ${comCapturas ? styles.comCapturas : ''}`}>
@@ -64,7 +57,6 @@ export function ScenarioCard({ cenario, modo, stackRotulo, escala = 'normal' }: 
                 <a href={c.url} target="_blank" rel="noreferrer" aria-label={`Abrir captura: ${c.passo}`}>
                   <img src={c.url} alt={`Tela durante o passo: ${c.passo}`} loading="lazy" className={styles.img} />
                 </a>
-                <span className={styles.legenda}>{c.passo}</span>
               </li>
             ))}
           </ul>

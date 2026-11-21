@@ -1,16 +1,26 @@
 import { useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useQueries } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { useFuncionalidades, useProjetos, useRegra, useRegras } from '../api/queries';
-import type { RuleDetail } from '../api/types';
-import { ErrorState, Loading, EmptyState } from '../components/States';
-import { ScenarioCard } from '../components/ScenarioCard';
-import { STACK_LABEL } from '../lib/format';
+import { api } from '../api/client';
+import { keys, useFuncionalidades, useProjetos, useRegras } from '../api/queries';
+import type { Cenario, RuleDetail, Stack } from '../api/types';
+import { EmptyState, ErrorState, Loading } from '../components/States';
+import { STACK_LABEL, ehPalavraChave } from '../lib/format';
 import { principalDe } from '../lib/rule';
 import { rotas } from '../lib/paths';
 import styles from './PresentationPage.module.css';
 
-/** Modo apresentação: um slide por regra, com os cenários e as capturas ao lado dos passos (RF-42 a RF-46). */
+interface Slide {
+  regra: RuleDetail;
+  cenario: Cenario;
+  stack: Stack;
+}
+
+/**
+ * Modo apresentação: um slide por cenário, na ordem das regras da funcionalidade. Cada slide
+ * mostra o cenário em um cartão e as capturas de tela ao lado, sem rolagem. Setas navegam (RF-42 a RF-46).
+ */
 export function PresentationPage() {
   const { projetoId = '', funcionalidade = '' } = useParams();
   const [params, setParams] = useSearchParams();
@@ -23,16 +33,38 @@ export function PresentationPage() {
   const feature = funcs.data?.find((f) => f.key === funcionalidade);
   const lista = useMemo(() => regras.data?.items ?? [], [regras.data]);
 
-  const pedida = params.get('regra');
-  const indice = Math.max(0, lista.findIndex((r) => r.id === pedida));
-  const total = lista.length;
-  const atual = lista[indice];
-  const detalhe = useRegra(atual?.id ?? '', projetoId);
+  const detalhes = useQueries({
+    queries: lista.map((r) => ({
+      queryKey: keys.regra(r.id, projetoId),
+      queryFn: () => api.regra(r.id, projetoId),
+    })),
+  });
+  const prontos = detalhes.every((d) => d.data !== undefined);
+  const slides: Slide[] = prontos
+    ? detalhes.flatMap((d) => {
+        const regra = d.data as RuleDetail;
+        const principal = principalDe(regra);
+        return (principal?.cenarios ?? []).map((cenario) => ({ regra, cenario, stack: principal!.stack }));
+      })
+    : [];
+  const total = slides.length;
+
+  // Posição: ?regra=ID leva ao primeiro cenário da regra; ?i=N leva ao N-ésimo slide (começando em 1).
+  const regraPedida = params.get('regra');
+  const iPedido = Number(params.get('i'));
+  let indice = 0;
+  if (regraPedida) {
+    const achado = slides.findIndex((s) => s.regra.id === regraPedida);
+    indice = achado >= 0 ? achado : 0;
+  } else if (Number.isInteger(iPedido) && iPedido >= 1) {
+    indice = Math.min(iPedido, Math.max(total, 1)) - 1;
+  }
+  const atual = slides[indice];
 
   function irPara(i: number) {
-    const alvo = lista[Math.min(Math.max(i, 0), total - 1)];
-    if (!alvo) return;
-    setParams({ regra: alvo.id }, { replace: true });
+    if (total === 0) return;
+    const alvo = Math.min(Math.max(i, 0), total - 1);
+    setParams({ i: String(alvo + 1) }, { replace: true });
   }
 
   useEffect(() => {
@@ -48,11 +80,9 @@ export function PresentationPage() {
     return () => window.removeEventListener('keydown', onKey);
   });
 
-  if (projetos.isError || funcs.isError || regras.isError) {
-    const err = (projetos.error ?? funcs.error ?? regras.error) as Error;
-    return <ErrorState mensagem={err.message} />;
-  }
-  if (!projetos.data || !funcs.data || !regras.data) return <Loading />;
+  const erro = [projetos, funcs, regras, ...detalhes].find((q) => q.isError);
+  if (erro) return <ErrorState mensagem={(erro.error as Error).message} />;
+  if (!projetos.data || !funcs.data || !regras.data || !prontos) return <Loading />;
   if (!projeto || !feature) {
     return (
       <div className={styles.center}>
@@ -62,18 +92,18 @@ export function PresentationPage() {
       </div>
     );
   }
-  if (total === 0) {
+  if (total === 0 || !atual) {
     return (
       <div className={styles.center}>
-        <EmptyState title="Esta funcionalidade não tem regras para apresentar.">
+        <EmptyState title="Esta funcionalidade não tem cenários para apresentar.">
           <Link to={rotas.catalogo(projetoId)}>Voltar ao catálogo</Link>
         </EmptyState>
       </div>
     );
   }
 
-  const progresso = ((indice + 1) / total) * 100;
-  const numero = String(indice + 1).padStart(2, '0');
+  const temCapturas = atual.cenario.capturas.length > 0;
+  const n = atual.cenario.capturas.length;
 
   return (
     <div className={styles.screen}>
@@ -94,66 +124,84 @@ export function PresentationPage() {
           </span>
           <Link to={rotas.catalogo(projetoId, { funcionalidade })} className={styles.exit}>
             <X size={14} strokeWidth={1.6} aria-hidden="true" />
-            Sair da apresentação
+            Sair
           </Link>
         </div>
       </header>
 
       <div className={styles.progressTrack} aria-hidden="true">
-        <div className={styles.progressFill} style={{ width: `${progresso}%` }} />
+        <div className={styles.progressFill} style={{ width: `${((indice + 1) / total) * 100}%` }} />
       </div>
 
-      <main className={styles.main}>
-        {detalhe.isError ? <ErrorState mensagem={(detalhe.error as Error).message} /> : null}
-        {!detalhe.data && !detalhe.isError ? <Loading /> : null}
-        {detalhe.data ? <Slide regra={detalhe.data} numero={numero} /> : null}
+      <main className={styles.stage}>
+        <section className={`${styles.slide} ${temCapturas ? styles.comCapturas : ''}`} aria-label={`Cenário ${indice + 1} de ${total}`}>
+          <div className={styles.cardCol}>
+            <div className={styles.regraInfo}>
+              <span className={`mono ${styles.regraId}`}>
+                {atual.regra.id} · {STACK_LABEL[atual.stack]}
+              </span>
+              <span className={styles.regraTitulo}>{atual.regra.titulo}</span>
+              {atual.regra.telas.length > 0 ? (
+                <span className={styles.tela}>
+                  Tela: {atual.regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ')}
+                </span>
+              ) : null}
+            </div>
+            <article className={styles.cartao}>
+              <h1 className={styles.cenarioNome}>{atual.cenario.nome}</h1>
+              <div className={styles.passos}>
+                {atual.cenario.passos.map((p, i) => (
+                  <div key={i} className={styles.passo}>
+                    <span className={ehPalavraChave(p.palavra) && p.palavra !== 'E' && p.palavra !== 'And' ? styles.kw : styles.kwMuted}>
+                      {p.palavra}
+                    </span>
+                    <span className={styles.texto}>{p.texto}</span>
+                  </div>
+                ))}
+              </div>
+              {atual.cenario.exemplos.length > 0 ? (
+                <table className={styles.exemplos}>
+                  <tbody>
+                    {atual.cenario.exemplos.map((linha, i) => (
+                      <tr key={i}>
+                        {linha.map((c, j) => (i === 0 ? <th key={j}>{c}</th> : <td key={j}>{c}</td>))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
+            </article>
+          </div>
+
+          {temCapturas ? (
+            <div className={styles.capCol} aria-label="Capturas de tela">
+              {atual.cenario.capturas.map((c, i) => (
+                <figure key={`${c.arquivo}-${i}`} className={styles.figura}>
+                  <img
+                    src={c.url}
+                    alt={`Tela durante o passo: ${c.passo}`}
+                    className={styles.img}
+                    style={{ maxHeight: `calc((100vh - 260px) / ${n})` }}
+                  />
+                  <figcaption className={styles.legenda}>{c.passo}</figcaption>
+                </figure>
+              ))}
+            </div>
+          ) : null}
+        </section>
       </main>
 
       <footer className={styles.footer}>
-        <button type="button" className={styles.navBtn} onClick={() => irPara(indice - 1)} disabled={indice === 0} aria-label="Regra anterior">
+        <button type="button" className={styles.navBtn} onClick={() => irPara(indice - 1)} disabled={indice === 0} aria-label="Cenário anterior">
           <ChevronLeft size={16} strokeWidth={1.6} aria-hidden="true" />
           Anterior
         </button>
-        <div className={styles.dots}>
-          {lista.map((r, i) => (
-            <button
-              key={r.id}
-              type="button"
-              onClick={() => irPara(i)}
-              aria-label={`Ir para a regra ${i + 1}`}
-              aria-current={i === indice ? 'step' : undefined}
-              className={`${styles.dot} ${i === indice ? styles.dotActive : ''}`}
-            />
-          ))}
-        </div>
-        <button type="button" className={styles.navPrimary} onClick={() => irPara(indice + 1)} disabled={indice === total - 1} aria-label="Próxima regra">
-          Próxima
+        <span className={styles.dica}>← → navegar · Esc sair</span>
+        <button type="button" className={styles.navPrimary} onClick={() => irPara(indice + 1)} disabled={indice === total - 1} aria-label="Próximo cenário">
+          Próximo
           <ChevronRight size={16} strokeWidth={1.6} aria-hidden="true" />
         </button>
       </footer>
     </div>
-  );
-}
-
-function Slide({ regra, numero }: { regra: RuleDetail; numero: string }) {
-  const principal = principalDe(regra);
-  const telaTexto = regra.telas.map((t) => (t.rota ? `${t.nome} · ${t.rota}` : t.nome)).join(' · ');
-  return (
-    <section className={styles.slide} aria-label={`Regra ${numero}`}>
-      <div className={styles.titleBox}>
-        <span className={`mono ${styles.label}`}>
-          REGRA {numero} · {regra.id}
-          {principal ? <span className={styles.stack}> · {STACK_LABEL[principal.stack]}</span> : null}
-        </span>
-        <h1 className={styles.title}>{regra.titulo}</h1>
-        {telaTexto ? <p className={styles.tela}>Tela: {telaTexto}</p> : null}
-      </div>
-
-      <div className={styles.cenarios}>
-        {(principal?.cenarios ?? []).map((c) => (
-          <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo="gherkin" escala="grande" />
-        ))}
-      </div>
-    </section>
   );
 }

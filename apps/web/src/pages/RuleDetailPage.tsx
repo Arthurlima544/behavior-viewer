@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Copy, Link2, Presentation } from 'lucide-react';
+import { Link2, Presentation } from 'lucide-react';
 import { api } from '../api/client';
 import { useRegra } from '../api/queries';
 import type { RuleDetail } from '../api/types';
@@ -9,7 +9,7 @@ import { Button, ButtonLink } from '../components/Button';
 import { ErrorState, Loading } from '../components/States';
 import { SegmentedControl } from '../components/SegmentedControl';
 import { ScenarioCard } from '../components/ScenarioCard';
-import { StackRow } from '../components/StackRow';
+import { StackBanner } from '../components/StackBanner';
 import { StatusChip } from '../components/StatusChip';
 import { Tag } from '../components/Tag';
 import { plural, rotuloStatus, STACK_LABEL } from '../lib/format';
@@ -17,7 +17,7 @@ import { principalDe } from '../lib/rule';
 import { rotas } from '../lib/paths';
 import styles from './RuleDetailPage.module.css';
 
-const PAGE = 3;
+const PAGE = 4;
 type Modo = 'gherkin' | 'texto';
 
 export function RuleDetailPage() {
@@ -67,7 +67,6 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
               ...(regra.funcionalidade
                 ? [{ label: regra.funcionalidade.nome, to: rotas.catalogo(projeto, { funcionalidade: funcionalidadeKey }) }]
                 : []),
-              { label: regra.id, mono: true },
             ]}
           />
           <h1 className={styles.title}>
@@ -81,89 +80,61 @@ function Detalhe({ regra }: { regra: RuleDetail }) {
               <Tag key={t}>{t.startsWith('@') ? t : `@${t}`}</Tag>
             ))}
           </div>
-          {regra.avisos.length > 0 ? (
-            <div className={styles.avisos}>
-              {regra.avisos.map((a) => (
-                <span key={a}>{a}</span>
-              ))}
-            </div>
-          ) : null}
         </div>
         <div className={styles.actions}>
-          <Button variant="outline" icon={<Link2 size={16} strokeWidth={1.5} />} onClick={copiarLink}>
+          <Button variant="outline" icon={<Link2 size={14} strokeWidth={1.5} />} onClick={copiarLink}>
             Copiar link
           </Button>
           <ButtonLink
             to={rotas.apresentacao(projeto, funcionalidadeKey, regra.id)}
             variant="primary"
-            icon={<Presentation size={16} strokeWidth={1.5} />}
+            icon={<Presentation size={14} strokeWidth={1.5} />}
           >
             Apresentar
           </ButtonLink>
         </div>
       </header>
-      <div role="status" aria-live="polite" className={styles.toast}>
-        {copiado ?? ''}
-      </div>
 
-      <div className={styles.body}>
-        <section className={styles.cenarios} aria-labelledby="cenarios-titulo">
-          <div className={styles.scenarioHead}>
-            <h2 id="cenarios-titulo" className={styles.sectionTitle}>
-              {plural(cenarios.length, 'cenário', 'cenários')}
-              {principal ? <span className={styles.stackTag}>{STACK_LABEL[principal.stack]}</span> : null}
-            </h2>
-            <SegmentedControl<Modo>
-              ariaLabel="Formato dos cenários"
-              value={modo}
-              onChange={setModo}
-              options={[
-                { value: 'gherkin', label: 'Gherkin' },
-                { value: 'texto', label: 'Texto simples' },
-              ]}
-            />
-          </div>
-          {cenarios.slice(0, visiveis).map((c) => (
-            <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
-          ))}
-          {cenarios.length > visiveis ? (
-            <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
-              Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
-            </button>
-          ) : null}
-        </section>
+      <StackBanner
+        implementacoes={regra.implementacoes}
+        ausentes={regra.ausentes}
+        historico={regra.historico}
+        onCopy={(stack) => copiarGherkin(stack)}
+        principal={principal?.stack}
+      />
 
-        <aside className={styles.side} aria-label="Onde a regra está">
-          <h2 className={styles.sideTitle}>Stacks</h2>
-          {regra.implementacoes.map((i) => {
-            const hist = regra.historico.find((h) => h.stack === i.stack)?.execucoes;
-            return (
-              <StackRow
-                key={i.stack}
-                stack={i.stack}
-                rotulo={i.rotulo}
-                status={i.status}
-                localizacao={`${i.arquivo}:${i.linha}`}
-                historico={hist}
-              />
-            );
-          })}
-          {regra.ausentes.map((a) => (
-            <StackRow
-              key={a.stack}
-              stack={a.stack}
-              rotulo={a.rotulo}
-              status="sem-cobertura"
-              onCopy={() => copiarGherkin(principal?.stack ?? a.stack)}
-            />
-          ))}
-          {regra.ausentes.length > 0 ? (
-            <p className={styles.hint}>
-              <Copy size={12} strokeWidth={1.5} aria-hidden="true" /> Copia o Gherkin desta regra para levar à stack sem cobertura.
-            </p>
-          ) : null}
-        </aside>
-      </div>
+      {copiado ? (
+        <div role="status" aria-live="polite" className={styles.toast}>
+          {copiado}
+        </div>
+      ) : null}
+
+      <section className={styles.cenarios} aria-labelledby="cenarios-titulo">
+        <div className={styles.scenarioHead}>
+          <h2 id="cenarios-titulo" className={styles.sectionTitle}>
+            {plural(cenarios.length, 'cenário', 'cenários')}
+            {principal ? <span className={styles.stackTag}>{STACK_LABEL[principal.stack]}</span> : null}
+          </h2>
+          <SegmentedControl<Modo>
+            ariaLabel="Formato dos cenários"
+            value={modo}
+            onChange={setModo}
+            options={[
+              { value: 'gherkin', label: 'Gherkin' },
+              { value: 'texto', label: 'Texto simples' },
+            ]}
+          />
+        </div>
+        {cenarios.slice(0, visiveis).map((c) => (
+          <ScenarioCard key={`${c.linha}-${c.nome}`} cenario={c} modo={modo} />
+        ))}
+        {cenarios.length > visiveis ? (
+          <button type="button" className={styles.more} onClick={() => setVisiveis((v) => v + PAGE)}>
+            Mostrar mais {Math.min(PAGE, cenarios.length - visiveis)} cenários
+          </button>
+        ) : null}
+      </section>
     </>
   );
 }
+

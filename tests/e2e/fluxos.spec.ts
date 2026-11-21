@@ -74,7 +74,7 @@ test.describe('detalhe da regra (RF-33 a RF-39)', () => {
     const id = await marketplaceId(request);
     await page.goto(`/projetos/${id}/regras/RN-CUP-003`);
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Cupom não se soma');
-    const onde = page.getByRole('complementary', { name: 'Onde a regra está' });
+    const onde = page.getByLabel('Stacks da regra');
     await expect(onde).toContainText('TypeScript');
     await expect(onde).toContainText('Java');
     await expect(onde).toContainText('sem cobertura nesta stack');
@@ -93,15 +93,15 @@ test.describe('detalhe da regra (RF-33 a RF-39)', () => {
 });
 
 test.describe('modo apresentação (RF-42 a RF-46)', () => {
-  test('navega por botões e por teclado, e sai para o catálogo', async ({ page, request }) => {
+  test('navega cenário a cenário por botões e setas, e sai com Esc', async ({ page, request }) => {
     const id = await marketplaceId(request);
     await page.goto(`/projetos/${id}/apresentar/cupons-de-desconto?regra=RN-CUP-001`);
-    await expect(page.getByText('1 de 4')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Regra anterior' })).toBeDisabled();
+    await expect(page.getByText(/^1 de \d+$/)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cenário anterior' })).toBeDisabled();
     await page.keyboard.press('ArrowRight');
-    await expect(page.getByText('2 de 4')).toBeVisible();
-    await page.getByRole('button', { name: 'Próxima regra' }).click();
-    await expect(page.getByText('3 de 4')).toBeVisible();
+    await expect(page.getByText(/^2 de \d+$/)).toBeVisible();
+    await page.getByRole('button', { name: 'Próximo cenário' }).click();
+    await expect(page.getByText(/^3 de \d+$/)).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page).toHaveURL(/\/projetos\/[^/]+$/);
   });
