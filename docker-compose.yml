@@ -1,0 +1,23 @@
+# Execução local (RNF-02). Uso:
+#   BEHAVIOR_HOST_WORKSPACE=~/code docker compose up --build
+# Várias pastas: monte cada uma em /workspace/<nome> e liste em BEHAVIOR_WORKSPACE, separadas por vírgula.
+services:
+  behavior-viewer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: behavior-viewer:local
+    ports:
+      # RNF-05: a porta só é publicada no localhost da máquina.
+      - "127.0.0.1:8787:8787"
+    environment:
+      BEHAVIOR_WORKSPACE: /workspace
+      BEHAVIOR_SCAN_INTERVAL: "60"
+    volumes:
+      # RNF-03: o workspace é montado somente leitura.
+      - ${BEHAVIOR_HOST_WORKSPACE:-./fixtures}:/workspace:ro
+      - behavior-data:/data
+    restart: unless-stopped
+
+volumes:
+  behavior-data:
