@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { SearchDialog } from '../components/SearchDialog';
+import { PendenciasAlert } from '../components/PendenciasAlert';
 import styles from './AppLayout.module.css';
 
 const CHAVE_RECOLHIDO = 'bv.sidebar.recolhida';
@@ -40,6 +41,7 @@ export function AppLayout() {
     <div className={styles.shell}>
       <Sidebar recolhido={recolhido} onToggle={() => setRecolhido((v) => !v)} />
       <main className={styles.main} id="conteudo">
+        <PendenciasAlert />
         <Outlet context={{ abrirBusca: () => setSearchOpen(true) }} />
       </main>
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />

@@ -4,7 +4,16 @@ import type { Snapshot } from './model.js';
 import type { Store } from './store.js';
 
 import type { Logger } from 'pino';
-import { calcularAtualizacoes, marcacoesDe } from './atualizacoes.js';
+import { calcularAtualizacoes, diferencas, marcacoesDe } from './atualizacoes.js';
+import { hashesDaPasta } from './scanner/assinaturas.js';
+
+/** Mudanças detectadas na pasta de testes, ainda não sincronizadas (o usuário precisa clicar em Sincronizar). */
+export interface Pendencia {
+  novos: string[];
+  alterados: string[];
+  removidos: string[];
+  detectadoEm: string;
+}
 
 export type { Logger };
 
@@ -13,6 +22,9 @@ export class AppState {
   private current: Snapshot | null = null;
   private inFlight: Promise<Snapshot> | null = null;
   private timer: NodeJS.Timeout | null = null;
+  private detectando = false;
+  /** Projetos com mudanças na pasta de testes que ainda não foram sincronizados. */
+  readonly pendencias = new Map<string, Pendencia>();
   /** Caminho absoluto de cada projeto. Interno: não é exposto pela API. */
   roots = new Map<string, string>();
 
@@ -69,6 +81,8 @@ export class AppState {
     }
     for (const stamp of reportStamps) this.recordHistory(stamp);
     this.current = snapshot;
+    // Após uma sincronização, os dados exibidos são os atuais: não há mais pendências.
+    this.pendencias.clear();
     this.roots = raizes;
     this.log.info(
       {
@@ -92,10 +106,36 @@ export class AppState {
     );
   }
 
+  /**
+   * Detecta mudanças nas pastas de testes e as registra como pendências. Não altera os dados exibidos:
+   * isso só acontece na sincronização, feita pelo usuário.
+   */
+  async detectar(): Promise<void> {
+    if (!this.current || this.inFlight || this.detectando) return;
+    this.detectando = true;
+    try {
+      for (const p of this.current.projetos) {
+        const root = this.roots.get(p.id);
+        if (!root) continue;
+        const atuais = await hashesDaPasta(root);
+        const d = diferencas(p.arquivosHash, atuais);
+        if (d.novos.length + d.alterados.length + d.removidos.length > 0) {
+          this.pendencias.set(p.id, { ...d, detectadoEm: new Date().toISOString() });
+        } else {
+          this.pendencias.delete(p.id);
+        }
+      }
+    } catch (err) {
+      this.log.error({ err }, 'falha na detecção de mudanças');
+    } finally {
+      this.detectando = false;
+    }
+  }
+
   startSchedule(): void {
     if (this.config.scanIntervalSeconds <= 0) return;
     this.timer = setInterval(() => {
-      this.refresh().catch((err: unknown) => this.log.error({ err }, 'falha na varredura'));
+      void this.detectar();
     }, this.config.scanIntervalSeconds * 1000);
     this.timer.unref();
   }

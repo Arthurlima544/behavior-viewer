@@ -25,6 +25,8 @@ export interface Atualizacoes {
 export interface ProjectSummary {
   id: string;
   atualizacoes: Atualizacoes;
+  /** Mudanças detectadas na pasta e ainda não sincronizadas. */
+  pendencias: { novos: string[]; alterados: string[]; removidos: string[]; detectadoEm: string } | null;
   novidades: { novas: number; alteradas: number };
   nome: string;
   descricao: string;

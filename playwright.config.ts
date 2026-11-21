@@ -26,6 +26,8 @@ export default defineConfig({
       BEHAVIOR_DATA_DIR: 'data/e2e',
       BEHAVIOR_PORT: String(PORT),
       BEHAVIOR_LOG_LEVEL: 'warn',
+      // Detecção de mudanças rápida nos testes; a sincronização continua manual.
+      BEHAVIOR_SCAN_INTERVAL: '2',
     },
     timeout: 20_000,
   },

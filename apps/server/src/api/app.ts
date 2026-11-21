@@ -26,6 +26,7 @@ import type { ProjetoModel, RegraModel, Snapshot } from '../model.js';
 import { HISTORY_SIZE, type Store } from '../store.js';
 import type { AppState } from '../state.js';
 import { gherkinOf } from './gherkin.js';
+import type { Pendencia } from '../state.js';
 import { createReadStream } from 'node:fs';
 import { caminhoCapturaValido } from '../screens.js';
 
@@ -60,9 +61,11 @@ async function pareceProjeto(dir: string): Promise<boolean> {
 }
 
 /** Resumo de um projeto para as listas da interface. */
-function resumoProjeto(p: ProjetoModel, selection: Map<string, boolean>) {
+function resumoProjeto(p: ProjetoModel, selection: Map<string, boolean>, pendencia: Pendencia | null) {
   return {
     id: p.id,
+    /** Mudanças detectadas na pasta e ainda não sincronizadas. Nada muda na tela até o usuário sincronizar. */
+    pendencias: pendencia,
     atualizacoes: p.atualizacoes,
     novidades: {
       novas: p.regras.filter((r) => r.marcacao === 'novo').length,
@@ -178,6 +181,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       ultimaVarredura: snap?.geradoEm ?? null,
       duracaoMs: snap?.duracaoMs ?? null,
       projetos: snap?.projetos.length ?? 0,
+      projetosComPendencias: deps.state.pendencias.size,
     };
   });
 
@@ -277,7 +281,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     deps.store.registerProject(id, real);
     await deps.state.refresh();
     const projeto = deps.state.snapshot?.projetos.find((p) => p.id === id);
-    return reply.code(201).send(projeto ? resumoProjeto(projeto, deps.store.selectionMap()) : { id });
+    return reply.code(201).send(projeto ? resumoProjeto(projeto, deps.store.selectionMap(), deps.state.pendencias.get(projeto.id) ?? null) : { id });
   });
 
   /** Marca o projeto como visto: a pasta atual vira a linha de base e o aviso de atualizações some. */
@@ -354,7 +358,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   app.get(`${api}/projetos`, async () => {
     const snap = snapshotOrFail();
     const selection = deps.store.selectionMap();
-    return { items: snap.projetos.map((p) => resumoProjeto(p, selection)) };
+    return { items: snap.projetos.map((p) => resumoProjeto(p, selection, deps.state.pendencias.get(p.id) ?? null)) };
   });
 
   app.put<{ Params: { id: string }; Body: { selecionado?: unknown } }>(

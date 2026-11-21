@@ -295,3 +295,8 @@
   flex: none;
   margin-left: auto;
 }
+
+.syncPendente {
+  border-color: var(--text-2);
+  color: var(--text);
+}

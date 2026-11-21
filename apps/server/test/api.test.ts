@@ -407,3 +407,38 @@ describe('novas e alteradas desde a última visualização', () => {
     }
   });
 });
+
+describe('detecção de mudanças sem sincronizar automaticamente', () => {
+  it('detectar registra pendência sem alterar os dados; só sincronizar atualiza', async () => {
+    const { mkdirSync, writeFileSync, rmSync: rm } = await import('node:fs');
+    const pasta = join(REPO, 'tests', `tmp-pend-${process.pid}-${Date.now()}`);
+    const feature = join(pasta, 'features', 'p.feature');
+    try {
+      mkdirSync(join(pasta, 'features'), { recursive: true });
+      writeFileSync(join(pasta, 'package.json'), JSON.stringify({ devDependencies: { '@cucumber/cucumber': '^11.0.0' } }));
+      writeFileSync(feature, 'Feature: Pend\n  Scenario: um\n    Given algo\n');
+      const id = (await app.inject({ method: 'POST', url: '/api/v1/projetos', payload: { caminho: pasta } })).json().id;
+      const resumo = async () =>
+        (await app.inject({ method: 'GET', url: '/api/v1/projetos' })).json().items.find((p: { id: string }) => p.id === id);
+
+      expect((await resumo()).pendencias).toBeNull();
+
+      writeFileSync(feature, 'Feature: Pend\n  Scenario: um\n    Given algo\n  Scenario: dois\n    Given outro\n');
+      await state.detectar();
+      let r = await resumo();
+      expect(r.pendencias).toMatchObject({ alterados: ['features/p.feature'] });
+      // Os dados exibidos continuam os do último sincronismo.
+      expect(r.contadores.cenarios).toBe(1);
+
+      const sync = await app.inject({ method: 'POST', url: '/api/v1/varreduras' });
+      expect(sync.statusCode).toBe(200);
+      r = await resumo();
+      expect(r.pendencias).toBeNull();
+      expect(r.contadores.cenarios).toBe(2);
+
+      await app.inject({ method: 'DELETE', url: `/api/v1/projetos/${id}` });
+    } finally {
+      rm(pasta, { recursive: true, force: true });
+    }
+  });
+});

@@ -21,7 +21,7 @@ export const useHealth = () =>
 export const useVisaoGeral = () => useQuery({ queryKey: keys.visao, queryFn: api.visaoGeral });
 
 export const useProjetos = () =>
-  useQuery({ queryKey: keys.projetos, queryFn: api.projetos, select: (d) => d.items });
+  useQuery({ queryKey: keys.projetos, queryFn: api.projetos, select: (d) => d.items, refetchInterval: 5_000 });
 
 export const useFuncionalidades = (id: string) =>
   useQuery({

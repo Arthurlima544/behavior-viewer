@@ -1,0 +1,32 @@
+.alerta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--text-2);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.detalhe {
+  font-size: 13px;
+  color: var(--text-3);
+  line-height: 1.5;
+}
+
+.alerta > button {
+  flex: none;
+}

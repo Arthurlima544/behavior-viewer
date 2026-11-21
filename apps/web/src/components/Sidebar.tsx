@@ -1,10 +1,8 @@
 import { NavLink, useLocation, Link } from 'react-router-dom';
 import { LayoutGrid, List, PanelLeftClose, PanelLeftOpen, Plus, Presentation, RefreshCw, Settings } from 'lucide-react';
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { api } from '../api/client';
 import { useFuncionalidades, useHealth, useProjetos } from '../api/queries';
 import { tempoRelativo } from '../lib/format';
+import { useSincronizar } from '../lib/sync';
 import { rotas } from '../lib/paths';
 import styles from './Sidebar.module.css';
 
@@ -17,8 +15,8 @@ export function Sidebar({ recolhido, onToggle }: Props) {
   const location = useLocation();
   const projetos = useProjetos();
   const health = useHealth();
-  const queryClient = useQueryClient();
-  const [syncing, setSyncing] = useState(false);
+  const { sincronizar, sincronizando } = useSincronizar();
+  const comPendencias = visiveisPendencias(projetos.data ?? []);
 
   const visiveis = (projetos.data ?? []).filter((p) => p.selecionado);
   const primeiro = visiveis[0];
@@ -28,19 +26,8 @@ export function Sidebar({ recolhido, onToggle }: Props) {
     primeiro && featureInicial ? rotas.apresentacao(primeiro.id, featureInicial) : primeiro ? rotas.catalogo(primeiro.id) : '/';
   const catalogoTo = primeiro ? rotas.catalogo(primeiro.id) : '/';
 
-  async function sincronizar() {
-    setSyncing(true);
-    try {
-      // A API responde só quando a varredura terminou: recarrega os dados logo em seguida.
-      await api.varrer();
-      await queryClient.invalidateQueries();
-    } finally {
-      setSyncing(false);
-    }
-  }
-
   const ultimaVarredura = health.data?.ultimaVarredura ?? null;
-  const emVarredura = syncing || health.data?.emVarredura;
+  const emVarredura = sincronizando || health.data?.emVarredura;
   const classe = `${styles.sidebar} ${recolhido ? styles.recolhido : ''}`;
 
   return (
@@ -137,14 +124,14 @@ export function Sidebar({ recolhido, onToggle }: Props) {
           <span className={styles.label}>{emVarredura ? 'Sincronizando…' : `Sincronizado ${tempoRelativo(ultimaVarredura)}`}</span>
           <button
             type="button"
-            className={styles.sync}
-            onClick={sincronizar}
+            className={`${styles.sync} ${comPendencias ? styles.syncPendente : ''}`}
+            onClick={() => void sincronizar()}
             disabled={emVarredura}
             aria-label="Sincronizar"
             title="Sincronizar"
           >
             <RefreshCw size={14} strokeWidth={1.5} aria-hidden="true" />
-            <span className={styles.label}>Sincronizar</span>
+            <span className={styles.label}>{comPendencias ? 'Sincronizar (alterações)' : 'Sincronizar'}</span>
           </button>
         </div>
       </div>
@@ -191,4 +178,8 @@ function NavItem({
       {conteudo}
     </Link>
   );
+}
+
+function visiveisPendencias(projetos: { pendencias: unknown }[]): boolean {
+  return projetos.some((p) => p.pendencias !== null);
 }
