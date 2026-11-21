@@ -121,3 +121,25 @@ test.describe('estados de erro e navegação', () => {
     await expect(page.getByRole('alert')).toContainText('não encontrada');
   });
 });
+
+test.describe('botão de apresentar no catálogo', () => {
+  test('sem funcionalidade selecionada oferece "Apresentar tudo"', async ({ page, request }) => {
+    const id = await marketplaceId(request);
+    await page.goto(`/projetos/${id}`);
+    const botao = page.getByRole('link', { name: 'Apresentar tudo' });
+    await expect(botao).toBeVisible();
+    await botao.click();
+    await expect(page).toHaveURL(/\/apresentar\/_tudo/);
+    await expect(page.getByText('Todas as funcionalidades')).toBeVisible();
+    await expect(page.getByText(/^1 de \d+$/)).toBeVisible();
+  });
+
+  test('com funcionalidade selecionada mostra o nome da funcionalidade no botão', async ({ page, request }) => {
+    const id = await marketplaceId(request);
+    await page.goto(`/projetos/${id}?funcionalidade=cupons-de-desconto`);
+    const botao = page.getByRole('link', { name: 'Apresentar "Cupons de desconto"' });
+    await expect(botao).toBeVisible();
+    await botao.click();
+    await expect(page).toHaveURL(/\/apresentar\/cupons-de-desconto/);
+  });
+});

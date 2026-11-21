@@ -8,7 +8,7 @@ import type { Cenario, RuleDetail, Stack } from '../api/types';
 import { EmptyState, ErrorState, Loading } from '../components/States';
 import { STACK_LABEL, ehPalavraChave } from '../lib/format';
 import { principalDe } from '../lib/rule';
-import { rotas } from '../lib/paths';
+import { APRESENTAR_TUDO, rotas } from '../lib/paths';
 import styles from './PresentationPage.module.css';
 
 interface Slide {
@@ -27,10 +27,13 @@ export function PresentationPage() {
   const navigate = useNavigate();
   const projetos = useProjetos();
   const funcs = useFuncionalidades(projetoId);
-  const regras = useRegras(projetoId, { funcionalidade });
+  const todas = funcionalidade === APRESENTAR_TUDO;
+  const regras = useRegras(projetoId, todas ? {} : { funcionalidade });
 
   const projeto = projetos.data?.find((p) => p.id === projetoId);
-  const feature = funcs.data?.find((f) => f.key === funcionalidade);
+  const feature = todas
+    ? { key: APRESENTAR_TUDO, nome: 'Todas as funcionalidades', descricao: '', tags: [], arquivos: [], regras: 0, cenarios: 0 }
+    : funcs.data?.find((f) => f.key === funcionalidade);
   const lista = useMemo(() => regras.data?.items ?? [], [regras.data]);
 
   const detalhes = useQueries({
@@ -74,7 +77,7 @@ export function PresentationPage() {
       if (e.key === 'ArrowLeft') irPara(indice - 1);
       if (e.key === 'Home') irPara(0);
       if (e.key === 'End') irPara(total - 1);
-      if (e.key === 'Escape') navigate(rotas.catalogo(projetoId, { funcionalidade }));
+      if (e.key === 'Escape') navigate(rotas.catalogo(projetoId, todas ? undefined : { funcionalidade }));
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -122,7 +125,7 @@ export function PresentationPage() {
           <span className={`mono ${styles.counter}`} aria-live="polite">
             {indice + 1} de {total}
           </span>
-          <Link to={rotas.catalogo(projetoId, { funcionalidade })} className={styles.exit}>
+          <Link to={rotas.catalogo(projetoId, todas ? undefined : { funcionalidade })} className={styles.exit}>
             <X size={14} strokeWidth={1.6} aria-hidden="true" />
             Sair
           </Link>

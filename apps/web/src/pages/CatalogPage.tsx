@@ -10,7 +10,7 @@ import { FeatureNav } from '../components/FeatureNav';
 import { SearchField } from '../components/SearchField';
 import { StackIcon } from '../components/StackIcon';
 import { STACK_LABEL, STATUS_OPTIONS, plural } from '../lib/format';
-import { rotas } from '../lib/paths';
+import { APRESENTAR_TUDO, rotas } from '../lib/paths';
 import pageStyles from './Page.module.css';
 import styles from './CatalogPage.module.css';
 
@@ -57,8 +57,11 @@ export function CatalogPage() {
   if (!projeto || !funcs.data) return <Loading />;
 
   const stacksDoProjeto = projeto.stacks.map((s) => s.id);
-  const featureAtiva = funcionalidade || funcs.data[0]?.key || '';
-  const apresentarTo = featureAtiva ? rotas.apresentacao(projeto.id, featureAtiva) : undefined;
+  const nomeFuncionalidade = funcs.data.find((f) => f.key === funcionalidade)?.nome ?? funcionalidade;
+  const apresentarTo = funcionalidade
+    ? rotas.apresentacao(projeto.id, funcionalidade)
+    : rotas.apresentacao(projeto.id, APRESENTAR_TUDO);
+  const apresentarLabel = funcionalidade ? `Apresentar "${nomeFuncionalidade}"` : 'Apresentar tudo';
   const filtrosAtivos = Boolean(q || stack || status || divergentes || funcionalidade);
 
   return (
@@ -74,11 +77,9 @@ export function CatalogPage() {
             {stacksDoProjeto.map((s) => STACK_LABEL[s]).join(', ')}
           </p>
         </div>
-        {apresentarTo ? (
-          <ButtonLink to={apresentarTo} variant="primary">
-            Apresentar seleção
-          </ButtonLink>
-        ) : null}
+        <ButtonLink to={apresentarTo} variant="primary">
+          {apresentarLabel}
+        </ButtonLink>
       </header>
 
       <div role="toolbar" aria-label="Filtros" className={styles.toolbar}>

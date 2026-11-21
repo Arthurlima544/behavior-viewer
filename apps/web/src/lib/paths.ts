@@ -1,3 +1,6 @@
+/** Segmento reservado da apresentação de todas as funcionalidades do projeto. */
+export const APRESENTAR_TUDO = '_tudo';
+
 /** Rotas da aplicação (RF-48). */
 export const rotas = {
   visaoGeral: () => '/',
