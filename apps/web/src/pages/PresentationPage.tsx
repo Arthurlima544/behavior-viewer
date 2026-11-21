@@ -181,7 +181,7 @@ export function PresentationPage() {
                     src={c.url}
                     alt={`Tela durante o passo: ${c.passo}`}
                     className={styles.img}
-                    style={{ maxHeight: `calc((100vh - 260px) / ${n})` }}
+                    style={{ maxHeight: `calc((100vh - 200px) / ${n} - 36px)` }}
                   />
                   <figcaption className={styles.legenda}>{c.passo}</figcaption>
                 </figure>
