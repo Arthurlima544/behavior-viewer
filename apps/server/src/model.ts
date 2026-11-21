@@ -100,6 +100,7 @@ export interface ErroModel {
 export interface ProjetoModel {
   id: string;
   nome: string;
+  descricao: string;
   /** Caminho relativo à pasta raiz do workspace que contém o projeto. */
   caminho: string;
   origem: 'auto' | 'config';

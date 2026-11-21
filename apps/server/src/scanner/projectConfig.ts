@@ -14,6 +14,7 @@ export interface DeclaredStack {
 
 export interface ProjectConfig {
   nome?: string;
+  descricao?: string;
   stacks: DeclaredStack[];
   ignorar: string[];
 }
@@ -66,6 +67,7 @@ export async function readProjectConfig(projectRoot: string): Promise<ConfigRead
   return {
     config: {
       nome: typeof record.nome === 'string' ? record.nome : undefined,
+      descricao: typeof record.descricao === 'string' ? record.descricao : undefined,
       stacks,
       ignorar: Array.isArray(record.ignorar) ? record.ignorar.map(String) : [],
     },

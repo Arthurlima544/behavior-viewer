@@ -13,13 +13,14 @@
   },
   "devDependencies": {
     "@types/better-sqlite3": "^9.6.0",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "vitest": "^5.1.1"
   },
   "dependencies": {
     "@behavior-viewer/domain": "^0.1.0",
     "@cucumber/gherkin": "^43.0.0",
     "@cucumber/messages": "^35.0.0",
-    "@fastify/static": "^8.3.0",
+    "@fastify/static": "^10.1.12",
     "better-sqlite3": "^13.2.0",
     "fast-xml-parser": "^5.12.1",
     "fastify": "^5.12.8",

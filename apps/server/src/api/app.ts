@@ -173,6 +173,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
       items: snap.projetos.map((p) => ({
         id: p.id,
         nome: p.nome,
+        descricao: p.descricao,
         caminho: p.caminho,
         origem: p.origem,
         selecionado: isSelected(p.id, selection),

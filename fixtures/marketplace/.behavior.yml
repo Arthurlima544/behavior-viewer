@@ -1,5 +1,6 @@
-# Fixture: projeto com três stacks declaradas (RF-03, RF-05).
 nome: Marketplace
+descricao: App de compras, loja web e API de pedidos
+# Fixture: projeto com três stacks declaradas (RF-03, RF-05).
 stacks:
   - id: flutter
     caminho: app

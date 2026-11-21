@@ -397,6 +397,7 @@ async function buildProject(
   const projeto: ProjetoModel = {
     id,
     nome,
+    descricao: acc.config?.descricao ?? '',
     caminho: relative(workspace, root).split(sep).join('/') || '.',
     origem,
     stacks: stackModels,
