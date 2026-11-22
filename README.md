@@ -1,168 +1,94 @@
 # Behavior Viewer
 
-Visualizador open source de **regras de negócio** extraídas de testes BDD (Gherkin, `.feature`). Lê os arquivos dos seus projetos e mostra cada regra de forma clara: em que projeto ela existe, em quais stacks está testada, qual o status da última execução e onde há divergência entre Flutter, TypeScript e Java.
+Visualizador open source de **regras de negócio** extraídas de testes BDD (Gherkin, arquivos `.feature`).
 
-> **Status:** primeira versão funcional em desenvolvimento local. Descoberta de projetos, parser Gherkin, API, interface fiel ao design, modo apresentação e imagem Docker estão implementados e testados. Ver o [roadmap](docs/roadmap.md) para o que falta antes da 1.0.
+Ele lê os testes dos seus projetos e mostra, de forma navegável, quais regras existem, em quais linguagens (Flutter, TypeScript, Java) cada regra está testada, qual o resultado da última execução, em qual tela ela se aplica e como ficou cada cenário com a captura de tela tirada durante o teste.
 
----
+Roda na sua máquina, em Docker, e funciona em macOS, Windows e Linux. Ele só lê seus arquivos: nunca os altera.
 
-## Por que existe
-
-Regras de negócio ficam espalhadas em arquivos Gherkin, em várias linguagens e repositórios. Ninguém consegue responder de uma vez:
-
-- Quais regras existem neste projeto?
-- Uma regra está testada em todas as stacks ou só em uma?
-- Quais testes estão falhando, em qual funcionalidade?
-
-O Behavior Viewer responde essas perguntas com uma interface bonita e navegável, pensada para desenvolvedores, QAs e produto.
-
-## O que faz
-
-- **Descobre projetos** automaticamente em pastas que você indicar, ou você seleciona manualmente.
-- **Agrupa stacks por projeto.** Um projeto pode ter Flutter, TypeScript, Java e outras stacks ao mesmo tempo.
-- **Mostra regras, não só cenários.** Uma regra (`Rule:` com tag `@RN-…`) é uma só, mesmo implementada em várias stacks.
-- **Mostra a cobertura** por funcionalidade e por stack, com matriz e painel de divergências.
-- **Mostra o status** de cada regra por stack, vindo dos relatórios de execução (Cucumber JSON, JUnit XML).
-- **Modo apresentação** para percorrer as regras de uma funcionalidade em tela cheia.
-- **Roda local, em Docker**, em macOS, Windows e Linux. Somente leitura sobre seus projetos.
-
-Design de referência (canvas): [visão geral, catálogo, detalhe e modo apresentação](docs/design/README.md).
+> Estado: primeira versão funcional (0.1.0). Veja o [roadmap](docs/roadmap.md) e o [changelog](CHANGELOG.md).
 
 ---
 
-## Início rápido
+## O que ele faz
 
-Pré-requisitos: Docker Desktop (macOS e Windows) ou Docker Engine com o plugin Compose (Linux).
+- **Registra projetos** escolhendo uma pasta pela própria interface ou digitando o caminho. Um projeto pode ter várias stacks: ele detecta Flutter, TypeScript e Java e agrupa tudo no mesmo projeto.
+- **Identifica funcionalidades e testes:** cada `Funcionalidade:` (ou `Feature:`) vira uma funcionalidade, e cada `Regra:` com uma tag `@RN-…` vira uma regra de negócio. Os mesmos nomes em stacks diferentes são agrupados.
+- **Mostra cobertura:** uma matriz por funcionalidade e stack, e a lista de divergências, isto é, regras presentes em uma linguagem e ausentes em outra.
+- **Mostra resultados:** lê os relatórios de execução (Cucumber JSON ou JUnit XML) e mostra o status de cada cenário e as últimas 14 execuções de cada regra.
+- **Mostra telas e capturas:** liga cada regra à tela e aos componentes declarados, e exibe as capturas de tela tiradas durante os testes, ao lado de cada cenário.
+- **Avisa sobre mudanças:** detecta alterações nas pastas de teste e pede para você sincronizar. Marca regras e cenários **novos** ou **alterados** desde a última vez que você viu o projeto.
+- **Apresenta** cenário a cenário, em tela cheia, com as setas do teclado, para revisar regras com a equipe.
 
-```bash
-HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up --build   # Linux
-docker compose up --build                                       # macOS e Windows
-```
+## Como começar
 
-Abra **http://localhost:8787** e clique em **Adicionar projeto**:
-
-1. Navegue pelas pastas ou digite o caminho (por exemplo `~/code`).
-2. O Behavior Viewer identifica os projetos da pasta, com stacks, funcionalidades e cenários.
-3. Marque os que quiser e clique em **Registrar**.
-
-Nada é pré-cadastrado. A pasta pessoal aparece como `~` e é montada **somente leitura**. Para limitar o acesso a uma pasta só, defina `HOST_HOME`:
+Veja o [guia de instalação](docs/instalacao.md). Em resumo, com Docker instalado:
 
 ```bash
-HOST_HOME=~/code docker compose up --build
-# Windows (PowerShell): $env:HOST_HOME="C:\Users\seu-usuario\code"
+docker compose up --build
 ```
 
-Trocar `HOST_HOME` muda o caminho interno dos projetos: registre-os de novo nesse caso.
+Abra **http://localhost:8787**, clique em **Adicionar projeto** e escolha a pasta de um projeto com testes BDD.
 
-**Windows:** mantenha os projetos em um drive compartilhado no Docker Desktop ou dentro do WSL2. Ver as [notas por sistema operacional](docs/arquitetura.md#83-notas-por-sistema-operacional).
+## Como o projeto funciona
 
-### Desenvolvimento
+| Conceito | Como o Behavior Viewer entende |
+|---|---|
+| Projeto | Uma pasta registrada. Ela pode conter uma ou mais stacks. |
+| Stack | Flutter, TypeScript ou Java, detectada pelo arquivo de manifesto (`pubspec.yaml`, `package.json`, `pom.xml`). |
+| Funcionalidade | O nome do bloco `Funcionalidade:` / `Feature:`. Mesmo nome, mesma funcionalidade. |
+| Regra | Um bloco `Regra:` com a tag de ID `@RN-<SIGLA>-<NNN>`. Sem a tag, a regra aparece como provisória. |
+| Cenário | Um `Cenário:` dentro da regra. |
+| Tela e componente | Tags `@tela-<Nome>` e `@componente-<Nome>`, ou a seção `telas` do `.behavior.yml`. |
+| Captura | Imagem tirada durante a execução, listada em `reports/capturas/indice.json`. |
+| Sincronizar | Reconstrói os projetos com o que está na pasta agora. Nunca acontece sozinho. |
 
-Pré-requisitos: Node.js 22 LTS e npm 10 ou superior.
+### Convenções que fazem diferença
 
-```bash
-npm ci
-npm run dev          # API em :8787 e interface em :5173 (recarga automática)
-npm test             # testes unitários e de API
-npm run test:e2e     # navegador real (Playwright), com projetos de teste em tests/fixtures
-npm run lint && npm run typecheck
-```
+- **Tags com hífen:** use `@tela-CheckoutPage` e `@componente-FormularioEndereco`. Os dois-pontos (`@tela:X`) são aceitos, mas não funcionam em runners do Dart como `package:test`.
+- **Títulos descritivos:** descreva o resultado para quem usa o app, e não os passos da tela. Exemplo: "Cupom expirado é recusado com mensagem clara".
+- **Arquivos de terceiros fora da contagem:** exclua `vendor/`, `node_modules/` e `Pods/` com `ignorar` no `.behavior.yml`.
+- **Relatórios para o status:** sem um relatório de execução, os cenários aparecem como "Sem execução". O Behavior Viewer não roda os testes; ele lê o que a sua suíte gera.
+
+Os [prompts de preparação por stack](docs/prompts/README.md) mostram como adaptar um projeto para telas, rotas e capturas.
 
 ## Configuração
 
-| Variável | Padrão | Descrição |
+| Variável | Padrão | Para que serve |
 |---|---|---|
 | `BEHAVIOR_BROWSE_ROOTS` | pasta pessoal | Pastas que a interface pode navegar e registrar, separadas por vírgula. |
 | `BEHAVIOR_BROWSE_LABEL` | `~` | Como a raiz aparece nos caminhos da interface. |
 | `BEHAVIOR_PORT` | `8787` | Porta do servidor. |
-| `BEHAVIOR_HOST` | `127.0.0.1` | Endereço de escuta. No contêiner é `0.0.0.0`, e o compose publica só em `127.0.0.1`. |
-| `BEHAVIOR_SCAN_INTERVAL` | `60` | Intervalo da varredura automática em segundos. `0` desativa. |
-| `BEHAVIOR_DATA_DIR` | `./data` | Onde fica o banco SQLite com seleção de projetos e histórico. |
+| `BEHAVIOR_HOST` | `127.0.0.1` | Endereço de escuta. No contêiner é `0.0.0.0`. |
+| `BEHAVIOR_SCAN_INTERVAL` | `60` | Segundos entre as detecções de mudança. `0` desativa. |
+| `BEHAVIOR_DATA_DIR` | `./data` | Onde fica o banco local (registros, histórico e linhas de base). |
 | `BEHAVIOR_LOG_LEVEL` | `info` | `debug`, `info`, `warn` ou `error`. |
 
-Cada projeto pode declarar nome, descrição, stacks e relatórios em um arquivo `.behavior.yml` na própria raiz. Sem o arquivo, a detecção é automática. Exemplo em [docs/arquitetura.md §4.2](docs/arquitetura.md#42-arquivo-behavioryml-rf-05).
+No Docker, `HOST_HOME` escolhe a pasta montada (padrão: sua pasta pessoal) e `HOST_UID`/`HOST_GID` definem o usuário do contêiner. Veja o [guia de instalação](docs/instalacao.md).
 
-## Como escrever regras reconhecidas
+## Segurança e privacidade
 
-O Behavior Viewer identifica a regra pelo bloco `Rule:` com uma tag de ID:
+- **Somente leitura:** a pasta de projetos é montada como leitura. O Behavior Viewer não escreve nos seus arquivos.
+- **Só localhost:** a porta é publicada apenas em `127.0.0.1`.
+- **Sem rede externa:** a interface carrega fontes e ícones do próprio servidor, e não há telemetria.
+- **Caminhos validados:** a navegação e as capturas só alcançam o que está dentro das pastas permitidas. Links simbólicos e `..` que saem dessas pastas são recusados.
 
-```gherkin
-# language: pt
-Funcionalidade: Cupons de desconto
-
-  @RN-CUP-003
-  Regra: Cupom não pode ser combinado com outra promoção
-    Se um produto já está com desconto promocional, o cupom não se soma a ele.
-
-    Cenário: Produto em promoção com cupom aplicado
-      Dado que o carrinho contém "Tênis Run" com 20% de desconto promocional
-      Quando o cliente aplicar o cupom "BEMVINDO10"
-      Então o cupom deve ser recusado
-```
-
-Para que a mesma regra seja consolidada entre stacks, use **o mesmo ID** em todas elas. Regras sem ID continuam aparecendo, mas são consolidadas só pelo título e marcadas com aviso.
-
----
-
-## Como organizar funcionalidades
-
-- **Uma funcionalidade é identificada pelo nome do bloco `Funcionalidade:` (ou `Feature:`).** Um arquivo `.feature` tem um bloco de funcionalidade. Na prática, uma funcionalidade costuma ser um arquivo.
-- **Mesmo nome, mesma funcionalidade.** Arquivos de stacks diferentes, ou de arquivos diferentes da mesma stack, com o mesmo nome de funcionalidade são agrupados em uma só. A comparação ignora maiúsculas, acentos e pontuação. Por isso o projeto pode ter 3 funcionalidades e 7 arquivos `.feature`, como no exemplo do Marketplace.
-- **Nomes diferentes, funcionalidades diferentes.** `Checkout` e `Finalização` viram duas funcionalidades, mesmo que tratem do mesmo fluxo. Mantenha o mesmo nome nas stacks.
-- **Arquivos de terceiros entram na contagem.** Pastas como `vendor/`, `node_modules/` ou `Pods/` podem trazer `.feature` de bibliotecas. Exclua essas pastas no `.behavior.yml`:
-
-  ```yaml
-  ignorar:
-    - "android/vendor/**"
-  ```
-
-- **Arquivo sem bloco de funcionalidade é ignorado.** Se o arquivo não tiver `Funcionalidade:` nem `Feature:`, as regras dele não aparecem no catálogo.
-- **Tags de tela e componente usam hífen:** `@tela-CheckoutPage` e `@componente-FormularioEndereco`. Use hífen, não dois-pontos: o runner de testes do Dart (`package:test`) rejeita tags com dois-pontos. O Behavior Viewer aceita as duas formas, mas a documentação e os prompts usam hífen.
-
-Para verificar, a visão geral e a tela **Projetos → Funcionalidades e testes** mostram o número de arquivos, funcionalidades, regras e cenários que o Behavior Viewer identificou.
-
-## Stacks suportadas
-
-| Stack | Detecção | Relatórios |
-|---|---|---|
-| Flutter / Dart | `pubspec.yaml` | JUnit XML |
-| TypeScript / JavaScript | `package.json` com Cucumber ou Playwright | Cucumber JSON |
-| Java | `pom.xml` ou `build.gradle` com Cucumber | Cucumber JSON, JUnit XML |
-| Outras Gherkin | — (aparece como "Gherkin genérico") | — |
-
-Mais linguagens estão no [backlog](docs/roadmap.md#pós-mvp-backlog).
-
----
-
-## Plataformas
-
-| Sistema | Requisito |
-|---|---|
-| macOS (Intel e Apple Silicon) | Docker Desktop |
-| Windows 10/11 | Docker Desktop com backend WSL2 |
-| Linux (x86_64 e arm64) | Docker Engine e plugin Compose |
-
----
+Para reportar uma vulnerabilidade, veja [SECURITY.md](SECURITY.md).
 
 ## Documentação
 
 | Documento | Conteúdo |
 |---|---|
-| [Requisitos](docs/requisitos.md) | Requisitos funcionais, não funcionais, glossário e escopo |
-| [Design](docs/design/README.md) | Tokens, telas, componentes e pontos do design a confirmar |
-| [Arquitetura](docs/arquitetura.md) | Componentes, modelo de domínio, API, persistência e Docker |
-| [Tech stack](docs/tech-stack.md) | Tecnologias escolhidas e justificativas |
-| [Decisões (ADR)](docs/adr/README.md) | Decisões tomadas e pendentes |
-| [Roadmap](docs/roadmap.md) | Fases, critérios de saída e backlog |
-| [Contribuição](CONTRIBUTING.md) | Como participar do projeto |
-
----
-
-## Contribuir
-
-Contribuições são bem-vindas: relatos de bug, sugestões, documentação, novas stacks e código. Leia o [guia de contribuição](CONTRIBUTING.md) antes de abrir um PR.
-
-Para segurança, veja [SECURITY.md](SECURITY.md). Para convivência, veja o [código de conduta](CODE_OF_CONDUCT.md).
+| [Instalação](docs/instalacao.md) | Docker, desenvolvimento local, Windows, macOS, Linux e solução de problemas |
+| [Contribuição](CONTRIBUTING.md) | Como participar, padrões de código, commits e revisão |
+| [Requisitos](docs/requisitos.md) | O que o produto faz, com critérios de aceite |
+| [Design](docs/design/README.md) | Tokens, telas e componentes |
+| [Arquitetura](docs/arquitetura.md) | Componentes, modelo de dados, API e Docker |
+| [Stack técnica](docs/tech-stack.md) | Tecnologias escolhidas e justificativas |
+| [Decisões (ADR)](docs/adr/README.md) | Decisões tomadas e a justificativa de cada uma |
+| [Prompts](docs/prompts/README.md) | Como preparar um projeto para telas, rotas e capturas |
+| [Roadmap](docs/roadmap.md) | Fases e o que falta para a 1.0 |
+| [Changelog](CHANGELOG.md) | O que mudou em cada versão |
 
 ## Licença
 
