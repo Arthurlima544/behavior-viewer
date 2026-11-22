@@ -16,7 +16,7 @@
   "scripts": {
     "dev": "concurrently -n api,web -c blue,magenta \"npm run dev -w apps/server\" \"npm run dev -w apps/web\"",
     "build": "npm run build -w packages/domain && npm run build -w apps/web && npm run build -w apps/server",
-    "typecheck": "npm run typecheck -w packages/domain && npm run typecheck -w apps/server && npm run typecheck -w apps/web",
+    "typecheck": "npm run build -w packages/domain && npm run typecheck -w packages/domain && npm run typecheck -w apps/server && npm run typecheck -w apps/web",
     "test": "npm run test -w packages/domain && npm run test -w apps/server && npm run test -w apps/web",
     "lint": "eslint .",
     "test:e2e": "npm run build -w packages/domain && npm run build -w apps/server && npm run build -w apps/web && playwright test",
